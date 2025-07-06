@@ -1,0 +1,18 @@
+<div class="container my-4">
+    <h3>Your Cart ({{ totalItems() }} items)</h3>
+    @if (cartItems().length) {
+    <ul class="list-group mb-3">
+        @for (item of cartItems(); track item.product.id) {
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ item.product.name }} (x{{ item.quantity }})
+            <button class="btn btn-sm btn-danger" (click)="removeItem(item.product.id)">
+                Remove
+            </button>
+        </li>
+        }
+    </ul>
+    } @else {
+    <p>Your cart is empty.</p>
+    }
+    <button class="btn btn-outline-danger" (click)="clearCart()">Clear Cart</button>
+</div>

@@ -5,7 +5,7 @@
       "name": "Wireless Headphones",
       "description": "High-quality noise-canceling wireless headphones",
       "price": 129.99,
-      "imageUrl": "https://via.placeholder.com/300x200?text=Headphones",
+      "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop&crop=center",
       "category": "Electronics",
       "stock": 20
     },
@@ -14,7 +14,7 @@
       "name": "Smart Watch",
       "description": "Touchscreen fitness smart watch with heart-rate monitor",
       "price": 89.99,
-      "imageUrl": "https://via.placeholder.com/300x200?text=Smart+Watch",
+      "imageUrl": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=200&fit=crop&crop=center",
       "category": "Wearables",
       "stock": 35
     },
@@ -23,7 +23,7 @@
       "name": "Gaming Mouse",
       "description": "RGB gaming mouse with 6 programmable buttons",
       "price": 49.99,
-      "imageUrl": "https://via.placeholder.com/300x200?text=Gaming+Mouse",
+      "imageUrl": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=200&fit=crop&crop=center",
       "category": "Accessories",
       "stock": 50
     }

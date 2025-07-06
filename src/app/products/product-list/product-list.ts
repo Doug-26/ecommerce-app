@@ -1,6 +1,8 @@
 import { Component, effect, inject } from '@angular/core';
 import { ProductService } from '../../services/product';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { CartService } from '../../services/cart';
+import { Product } from '../../models/products';
 
 @Component({
   selector: 'app-product-list',
@@ -10,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 })
 export class ProductList {
   private productService = inject(ProductService);
+  private cartService = inject(CartService);
 
   // Using toSignal to convert the Observable to a Signal
   // This allows us to use the products in the template directly  
@@ -25,6 +28,11 @@ export class ProductList {
       const productList = this.products();
       console.log('Product list updated:', productList);
     });
+  }
 
+  addToCart(product: Product): void {
+    // Call the addToCart method from CartService to add the product to the cart
+    this.cartService.addToCart(product);
+    console.log(`Product added to cart: ${product.name}`);
   }
 }
