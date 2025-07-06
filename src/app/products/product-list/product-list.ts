@@ -3,10 +3,11 @@ import { ProductService } from '../../services/product';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CartService } from '../../services/cart';
 import { Product } from '../../models/products';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-product-list',
-  imports: [],
+  imports: [RouterModule],
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss'
 })
