@@ -1,0 +1,100 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4">My Orders</h2>
+
+      @if (loading()) {
+        <div class="text-center">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading your orders...</p>
+        </div>
+      } @else if (error()) {
+        <div class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          {{ error() }}
+        </div>
+      } @else if (orders().length === 0) {
+        <div class="text-center py-5">
+          <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+          <h4 class="text-muted">No Orders Yet</h4>
+          <p class="text-muted">You haven't placed any orders yet.</p>
+          <a routerLink="/products" class="btn btn-primary">
+            <i class="fas fa-shopping-cart me-2"></i>
+            Start Shopping
+          </a>
+        </div>
+      } @else {
+        <!-- Orders List -->
+        @for (order of orders(); track order.id) {
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="mb-0">Order #{{ order.id }}</h5>
+                <small class="text-muted">Placed on {{ order.orderDate | date:'medium' }}</small>
+              </div>
+              <span class="badge {{ getStatusBadgeClass(order.status) }} fs-6">
+                {{ order.status | titlecase }}
+              </span>
+            </div>
+            
+            <div class="card-body">
+              <!-- Order Items -->
+              <div class="row">
+                @for (item of order.items; track item.productId) {
+                  <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="d-flex">
+                      <img [src]="item.imageUrl" 
+                           [alt]="item.productName" 
+                           class="rounded me-3"
+                           style="width: 60px; height: 60px; object-fit: cover;">
+                      <div class="flex-grow-1">
+                        <h6 class="mb-1">{{ item.productName }}</h6>
+                        <p class="mb-1 text-muted small">Qty: {{ item.quantity }}</p>
+                        <p class="mb-0 fw-bold">${{ item.price }}</p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Order Summary -->
+              <hr>
+              <div class="row">
+                <div class="col-md-8">
+                  <h6>Shipping Address:</h6>
+                  <p class="text-muted mb-0">{{ order.shippingAddress }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                  <h5 class="mb-0">Total: ${{ order.total.toFixed(2) }}</h5>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-transparent">
+              <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-eye me-1"></i>
+                  View Details
+                </button>
+                @if (order.status === 'delivered') {
+                  <button class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-redo me-1"></i>
+                    Reorder
+                  </button>
+                }
+                @if (order.status === 'pending') {
+                  <button class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-times me-1"></i>
+                    Cancel Order
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

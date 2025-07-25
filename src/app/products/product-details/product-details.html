@@ -1,22 +1,85 @@
-@if (product()) {
-  <div class="container my-4">
-    <div class="row">
-      <div class="col-md-6">
-        <img [src]="product()!.imageUrl" class="img-fluid rounded shadow" alt="{{ product()!.name }}">
+<div class="container my-4">
+  @if (loading()) {
+    <div class="text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
+      <p class="mt-2">Loading product details...</p>
+    </div>
+  } @else if (error()) {
+    <div class="text-center">
+      <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ error() }}
+      </div>
+      <button class="btn btn-primary" (click)="goBack()">
+        <i class="fas fa-arrow-left me-2"></i>
+        Back to Products
+      </button>
+    </div>
+  } @else if (product()) {
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/products" class="text-decoration-none">Products</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ product()!.name }}
+        </li>
+      </ol>
+    </nav>
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="text-center">
+          <img [src]="product()!.imageUrl" 
+               class="img-fluid rounded shadow" 
+               alt="{{ product()!.name }}"
+               style="max-height: 400px; object-fit: cover;">
+        </div>
+      </div>
+      
       <div class="col-md-6">
-        <h2>{{ product()!.name }}</h2>
-        <p class="text-muted">{{ product()!.category }}</p>
-        <p>{{ product()!.description }}</p>
-        <h4 class="text-primary">${{ product()!.price }}</h4>
-        <p><strong>In stock:</strong> {{ product()!.stock }}</p>
-        <button class="btn btn-success mt-3" (click)="addToCart(product()!)">Add to Cart</button>
+        <div class="product-info">
+          <span class="badge bg-secondary mb-2">{{ product()!.category }}</span>
+          <h1 class="mb-3">{{ product()!.name }}</h1>
+          <p class="lead text-muted mb-3">{{ product()!.description }}</p>
+          
+          <div class="price-section mb-4">
+            <h3 class="text-primary mb-0">${{ product()!.price.toFixed(2) }}</h3>
+          </div>
+          
+          <div class="stock-info mb-4">
+            @if (product()!.stock > 0) {
+              <p class="text-success mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>In Stock:</strong> {{ product()!.stock }} available
+              </p>
+            } @else {
+              <p class="text-danger mb-0">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Out of Stock</strong>
+              </p>
+            }
+          </div>
+          
+          <div class="action-buttons">
+            <button 
+              class="btn btn-success btn-lg me-3" 
+              [disabled]="product()!.stock === 0"
+              (click)="addToCart(product()!)">
+              <i class="fas fa-shopping-cart me-2"></i>
+              Add to Cart
+            </button>
+            
+            <button class="btn btn-outline-secondary" (click)="goBack()">
+              <i class="fas fa-arrow-left me-2"></i>
+              Back to Products
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-} @else {
-  <div class="container my-4">
-    <h2 class="text-center">Product not found</h2>
-    <p class="text-center">The product you are looking for does not exist.</p>
-  </div>
-}
+  }
+</div>

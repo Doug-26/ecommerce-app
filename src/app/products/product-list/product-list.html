@@ -3,19 +3,21 @@
     @for (product of products(); track product.id) {
     <!-- Display each product in a card -->
     <div class="col-md-4 mb-4">
-      <div class="card h-100">
-          <a [routerLink]="['products/', product.id]" class="text-decoration-none text-dark">
-          <img [src]="product.imageUrl" class="card-img-top" alt="{{ product.name }}">
-          <div class="card-body">
+      <div class="card h-100 d-flex flex-column">
+        <a [routerLink]="['/products', product.id]" class="text-decoration-none text-dark flex-grow-1">
+          <img [src]="product.imageUrl" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+          <div class="card-body d-flex flex-column">
             <h5 class="card-title">{{ product.name }}</h5>
             <p class="card-text">{{ product.description }}</p>
-            <p class="card-text fw-bold text-primary">${{ product.price }}</p>
+            <p class="card-text fw-bold text-primary mt-auto">${{ product.price }}</p>
           </div>
         </a>
-        <button class="btn btn-sm btn-primary w-100 mt-2 btn-no-top-radius" (click)="addToCart(product)">
-          Add to Cart
-        </button>
+        <div class="card-footer bg-transparent border-0 p-3">
+          <button class="btn btn-primary w-100" (click)="addToCart(product)">
+            Add to Cart
+          </button>
         </div>
+      </div>
     </div>
     }
   </div>

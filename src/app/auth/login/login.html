@@ -1,0 +1,77 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h2 class="card-title text-center mb-4">Login</h2>
+          
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">
+              {{ error() }}
+            </div>
+          }
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input 
+                type="email" 
+                class="form-control"
+                [class.is-invalid]="f['email'].invalid && f['email'].touched"
+                id="email" 
+                formControlName="email"
+                placeholder="Enter your email">
+              <div class="invalid-feedback">
+                @if (f['email'].errors?.['required']) {
+                  Email is required
+                }
+                @if (f['email'].errors?.['email']) {
+                  Please enter a valid email
+                }
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input 
+                type="password" 
+                class="form-control"
+                [class.is-invalid]="f['password'].invalid && f['password'].touched"
+                id="password" 
+                formControlName="password"
+                placeholder="Enter your password">
+              <div class="invalid-feedback">
+                @if (f['password'].errors?.['required']) {
+                  Password is required
+                }
+                @if (f['password'].errors?.['minlength']) {
+                  Password must be at least 6 characters
+                }
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="loading() || loginForm.invalid">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Logging in...
+                } @else {
+                  Login
+                }
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-3">
+            <p class="mb-0">Don't have an account? 
+              <a routerLink="/register" class="text-decoration-none">Register here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

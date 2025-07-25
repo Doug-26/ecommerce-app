@@ -1,7 +1,7 @@
 {
   "products": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Wireless Headphones",
       "description": "High-quality noise-canceling wireless headphones",
       "price": 129.99,
@@ -10,7 +10,7 @@
       "stock": 20
     },
     {
-      "id": 2,
+      "id": "2",
       "name": "Smart Watch",
       "description": "Touchscreen fitness smart watch with heart-rate monitor",
       "price": 89.99,
@@ -19,7 +19,7 @@
       "stock": 35
     },
     {
-      "id": 3,
+      "id": "3",
       "name": "Gaming Mouse",
       "description": "RGB gaming mouse with 6 programmable buttons",
       "price": 49.99,
@@ -30,12 +30,46 @@
   ],
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "email": "test@example.com",
       "password": "123456",
       "name": "Test User"
+    },
+    {
+      "id": "26d3",
+      "name": "Christian Jay De La Cruz",
+      "email": "cjdelacruz267@gmail.com",
+      "password": "cjdelacruz",
+      "phone": "09516909596",
+      "address": "B14 L10 Green Valley Barangay Pacol"
+    },
+    {
+      "id": "e8c4",
+      "name": "Test User",
+      "email": "test@example.com",
+      "password": "testuser",
+      "phone": "12345678910",
+      "address": "Naga City"
     }
   ],
   "cart": [],
-  "orders": []
+  "orders": [
+    {
+      "id": "1",
+      "userId": 1,
+      "items": [
+        {
+          "productId": 1,
+          "productName": "Wireless Headphones",
+          "quantity": 1,
+          "price": 129.99,
+          "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop&crop=center"
+        }
+      ],
+      "total": 129.99,
+      "status": "delivered",
+      "orderDate": "2024-07-20T10:30:00Z",
+      "shippingAddress": "123 Main St, City, State 12345"
+    }
+  ]
 }

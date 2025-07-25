@@ -1,0 +1,139 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h2 class="card-title text-center mb-4">Create Account</h2>
+          
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">
+              {{ error() }}
+            </div>
+          }
+
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">Full Name*</label>
+                <input 
+                  type="text" 
+                  class="form-control"
+                  [class.is-invalid]="f['name'].invalid && f['name'].touched"
+                  id="name" 
+                  formControlName="name"
+                  placeholder="Enter your full name">
+                <div class="invalid-feedback">
+                  @if (f['name'].errors?.['required']) {
+                    Name is required
+                  }
+                  @if (f['name'].errors?.['minlength']) {
+                    Name must be at least 2 characters
+                  }
+                </div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Email*</label>
+                <input 
+                  type="email" 
+                  class="form-control"
+                  [class.is-invalid]="f['email'].invalid && f['email'].touched"
+                  id="email" 
+                  formControlName="email"
+                  placeholder="Enter your email">
+                <div class="invalid-feedback">
+                  @if (f['email'].errors?.['required']) {
+                    Email is required
+                  }
+                  @if (f['email'].errors?.['email']) {
+                    Please enter a valid email
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="password" class="form-label">Password*</label>
+                <input 
+                  type="password" 
+                  class="form-control"
+                  [class.is-invalid]="f['password'].invalid && f['password'].touched"
+                  id="password" 
+                  formControlName="password"
+                  placeholder="Enter your password">
+                <div class="invalid-feedback">
+                  @if (f['password'].errors?.['required']) {
+                    Password is required
+                  }
+                  @if (f['password'].errors?.['minlength']) {
+                    Password must be at least 6 characters
+                  }
+                </div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password*</label>
+                <input 
+                  type="password" 
+                  class="form-control"
+                  [class.is-invalid]="f['confirmPassword'].invalid && f['confirmPassword'].touched"
+                  id="confirmPassword" 
+                  formControlName="confirmPassword"
+                  placeholder="Confirm your password">
+                <div class="invalid-feedback">
+                  @if (f['confirmPassword'].errors?.['required']) {
+                    Please confirm your password
+                  }
+                  @if (f['confirmPassword'].errors?.['passwordMismatch']) {
+                    Passwords do not match
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone Number</label>
+              <input 
+                type="tel" 
+                class="form-control"
+                id="phone" 
+                formControlName="phone"
+                placeholder="Enter your phone number (optional)">
+            </div>
+
+            <div class="mb-3">
+              <label for="address" class="form-label">Address</label>
+              <textarea 
+                class="form-control"
+                id="address" 
+                formControlName="address"
+                rows="3"
+                placeholder="Enter your address (optional)"></textarea>
+            </div>
+
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="loading() || registerForm.invalid">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Creating Account...
+                } @else {
+                  Create Account
+                }
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-3">
+            <p class="mb-0">Already have an account? 
+              <a routerLink="/login" class="text-decoration-none">Login here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
