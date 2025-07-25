@@ -4,7 +4,7 @@
     <!-- Display each product in a card -->
     <div class="col-md-4 mb-4">
       <div class="card h-100">
-          <a [routerLink]="['product/', product.id]" class="text-decoration-none text-dark">
+          <a [routerLink]="['products/', product.id]" class="text-decoration-none text-dark">
           <img [src]="product.imageUrl" class="card-img-top" alt="{{ product.name }}">
           <div class="card-body">
             <h5 class="card-title">{{ product.name }}</h5>

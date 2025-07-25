@@ -23,22 +23,22 @@ export class ProductDetails {
   constructor() {
     // Fetch the product ID from the route parameters
     const id = Number(this.route.snapshot.paramMap.get('productId'));
-
-    this.productService.getProducts().subscribe(products => {
-      // Find the product with the matching ID
-      const foundProduct = products.find(product => product.id === id);
-      
-      // Update the product signal with the found product or null if not found
-      this.product.set(foundProduct || null);
-      
-      // Log the product details for debugging
-      console.log('Product details:', this.product());
-    }
-    )
+    this.getProductById(id);
   }
 
   addToCart(product: Product): void {
     this.cartService.addToCart(product);
     console.log(`Product added to cart: ${product.name}`);
+  }
+
+  getProductById(id: number): void {
+    this.productService.getProductById(id).subscribe(product => {
+      if (product) {
+        this.product.set(product);
+        console.log('Product details fetched:', product);
+      } else {
+        console.error(`Product with ID ${id} not found.`);
+      }
+    });
   }
 }

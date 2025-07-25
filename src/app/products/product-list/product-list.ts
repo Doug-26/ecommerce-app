@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CartService } from '../../services/cart';
 import { Product } from '../../models/products';
 import { RouterModule } from '@angular/router';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-product-list',
@@ -18,6 +19,10 @@ export class ProductList {
   // Using toSignal to convert the Observable to a Signal
   // This allows us to use the products in the template directly  
   products = toSignal(this.productService.getProducts(), { initialValue: [] });
+
+  // Add loading state to ProductList
+  isLoading = signal(false);
+  error = signal<string | null>(null);
 
   constructor() {
     // The products are now available as a Signal
