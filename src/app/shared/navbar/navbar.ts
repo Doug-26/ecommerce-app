@@ -2,8 +2,8 @@ import { Component, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { CartService } from '../../services/cart';
 import { AuthService } from '../../services/auth.service';
-import { RouterModule } from '@angular/router';import { ClickOutsideDirective } from '../../directives/click-outside-directive';
-;
+import { RouterModule } from '@angular/router';
+import { ClickOutsideDirective } from '../../directives/click-outside-directive';
 
 @Component({
   selector: 'app-navbar',

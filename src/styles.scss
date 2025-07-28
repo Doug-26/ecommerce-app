@@ -1,1 +1,21 @@
 /* You can add global styles to this file, and also import other style files */
+
+// Ensure proper Bootstrap dropdown behavior
+.dropdown-menu.show {
+  display: block;
+}
+
+// Fix dropdown positioning issues
+.dropdown-menu {
+  z-index: 1050;
+}
+
+// Prevent horizontal scroll
+html, body {
+  overflow-x: hidden;
+}
+
+// Selective transitions for better performance
+.btn, .nav-link, .dropdown-item {
+  transition: all 0.2s ease-in-out;
+}
