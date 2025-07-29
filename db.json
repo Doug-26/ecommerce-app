@@ -1,7 +1,7 @@
 {
   "products": [
     {
-      "id": "1",
+      "id": 1,
       "name": "Wireless Headphones",
       "description": "High-quality noise-canceling wireless headphones",
       "price": 129.99,
@@ -10,7 +10,7 @@
       "stock": 20
     },
     {
-      "id": "2",
+      "id": 2,
       "name": "Smart Watch",
       "description": "Touchscreen fitness smart watch with heart-rate monitor",
       "price": 89.99,
@@ -19,7 +19,7 @@
       "stock": 35
     },
     {
-      "id": "3",
+      "id": 3,
       "name": "Gaming Mouse",
       "description": "RGB gaming mouse with 6 programmable buttons",
       "price": 49.99,
@@ -30,13 +30,7 @@
   ],
   "users": [
     {
-      "id": "1",
-      "email": "test@example.com",
-      "password": "123456",
-      "name": "Test User"
-    },
-    {
-      "id": "26d3",
+      "id": 1,
       "name": "Christian Jay De La Cruz",
       "email": "cjdelacruz267@gmail.com",
       "password": "cjdelacruz",
@@ -44,18 +38,31 @@
       "address": "B14 L10 Green Valley Barangay Pacol"
     },
     {
-      "id": "e8c4",
+      "id": 2,
       "name": "Test User",
       "email": "test@example.com",
-      "password": "testuser",
+      "password": "123456",
       "phone": "12345678910",
       "address": "Naga City"
     }
   ],
-  "cart": [],
+  "cart": [
+    {
+      "id": "a90a",
+      "userId": 1,
+      "productId": 1,
+      "quantity": 1
+    },
+    {
+      "id": "c5ce",
+      "userId": 2,
+      "productId": 2,
+      "quantity": 2
+    }
+  ],
   "orders": [
     {
-      "id": "1",
+      "id": 1,
       "userId": 1,
       "items": [
         {
