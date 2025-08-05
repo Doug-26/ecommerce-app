@@ -3,13 +3,13 @@ import { Product } from "./products";
 export interface CartItem {
   product: Product;
   quantity: number;
-  userId?: number; // Add userId for server-side storage
+  userId?: number;
 }
 
 export interface ServerCartItem {
-  id?: number;
+  id?: string | number; // Allow both string and number IDs
   userId: number;
   productId: number;
   quantity: number;
-  product?: Product; // Optional for populated responses
+  product?: Product;
 }

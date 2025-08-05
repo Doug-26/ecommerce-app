@@ -210,8 +210,8 @@ export class CartService {
       this.cartApiService.getUserCart(Number(user.id!)).subscribe({
         next: (serverItems) => {
           const existingItem = serverItems.find(item => item.productId === product.id);
-          if (existingItem) {
-            this.cartApiService.updateCartItem(existingItem.id!, quantity).subscribe({
+          if (existingItem && existingItem.id) {
+            this.cartApiService.updateCartItem(existingItem.id, quantity).subscribe({
               next: (updated) => console.log('Server cart updated:', updated),
               error: (error) => console.error('Failed to update server cart:', error)
             });

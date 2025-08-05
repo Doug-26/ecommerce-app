@@ -48,16 +48,16 @@
   ],
   "cart": [
     {
-      "id": "a90a",
+      "id": "e593",
       "userId": 1,
       "productId": 1,
       "quantity": 1
     },
     {
-      "id": "c5ce",
+      "id": "a9a4",
       "userId": 2,
       "productId": 2,
-      "quantity": 2
+      "quantity": 1
     }
   ],
   "orders": [
