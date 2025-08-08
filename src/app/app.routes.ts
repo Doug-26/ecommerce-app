@@ -20,6 +20,7 @@ export const routes: Routes = [
   {
     path: 'cart',
     loadComponent: () => import('./cart/cart-item/cart-item').then(m => m.CartItemComponent),
+    canActivate: [authGuard], // Add auth guard here
     title: 'Shopping Cart - MyShop'
   },
   {

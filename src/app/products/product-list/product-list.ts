@@ -1,54 +1,58 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
 import { ProductService } from '../../services/product';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { CartService } from '../../services/cart';
-import { Product } from '../../models/products';
-import { RouterModule } from '@angular/router';
-import { signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Product } from '../../models/products';
 
 @Component({
   selector: 'app-product-list',
-  imports: [RouterModule],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss'
 })
-export class ProductListComponent {
+export class ProductListComponent implements OnInit {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // Using toSignal to convert the Observable to a Signal
-  // This allows us to use the products in the template directly  
-  products = toSignal(this.productService.getProducts(), { initialValue: [] });
+  products = signal<Product[]>([]);
+  loading = signal(true);
+  error = signal('');
 
-  // Add loading state to ProductList
-  isLoading = signal(false);
-  error = signal<string | null>(null);
+  ngOnInit(): void {
+    this.loadProducts();
+  }
 
-  constructor() {
-    // The products are now available as a Signal
-    // You can use this.products() in the template to access the product list
-    
-    // Effect to log the product list whenever it changes
-    // This is useful for debugging or side effects
-    effect(() => {
-      const productList = this.products();
-      console.log('Product list updated:', productList);
+  private loadProducts(): void {
+    this.loading.set(true);
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        this.products.set(products);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load products:', error);
+        this.error.set('Failed to load products. Please try again.');
+        this.loading.set(false);
+      }
     });
   }
 
   addToCart(product: Product): void {
+    // Check if user is logged in first
     if (!this.authService.isLoggedIn()) {
-      // Redirect to login if not authenticated
-      this.router.navigate(['/login']);
+      // Redirect to login with return URL
+      this.router.navigate(['/login'], { 
+        queryParams: { returnUrl: '/products' }
+      });
       return;
     }
-    
-    // Call the addToCart method from CartService to add the product to the cart
+
     this.cartService.addToCart(product);
-    console.log(`Product added to cart: ${product.name}`);
+    console.log(`Added ${product.name} to cart`);
   }
 }
