@@ -123,6 +123,7 @@ export class CheckoutService {
     const payment = this._paymentMethod();
 
     if (!user || !shippingAddr || !payment || cartItems.length === 0) {
+      this._isProcessing.set(false);
       throw new Error('Missing required checkout information');
     }
 

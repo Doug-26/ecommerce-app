@@ -1,1 +1,198 @@
-<p>checkout-success works!</p>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      @if (order) {
+        <!-- Success Message -->
+        <div class="text-center mb-5">
+          <div class="success-icon mb-4">
+            <i class="fas fa-check-circle fa-5x text-success"></i>
+          </div>
+          <h2 class="text-success mb-3">Order Placed Successfully!</h2>
+          <p class="lead text-muted">
+            Thank you for your purchase. Your order has been confirmed and is being processed.
+          </p>
+        </div>
+
+        <!-- Order Summary Card -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-success text-white">
+            <div class="row align-items-center">
+              <div class="col">
+                <h5 class="mb-0">
+                  <i class="fas fa-receipt me-2"></i>Order Confirmation
+                </h5>
+              </div>
+              <div class="col-auto">
+                <small>Order #{{ order.id }}</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <!-- Order Details -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Order Date</h6>
+                <p class="mb-0">{{ order.orderDate | date:'medium' }}</p>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Status</h6>
+                <span class="badge bg-warning text-dark">{{ order.status | titlecase }}</span>
+              </div>
+            </div>
+
+            @if (order.trackingNumber) {
+              <div class="row mb-4">
+                <div class="col-12">
+                  <h6 class="text-muted mb-2">Tracking Number</h6>
+                  <p class="mb-0 font-monospace">{{ order.trackingNumber }}</p>
+                  <small class="text-muted">You can use this number to track your shipment</small>
+                </div>
+              </div>
+            }
+
+            <!-- Shipping Address -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-shipping-fast me-2"></i>Shipping Address
+                </h6>
+                <p class="mb-0">{{ order.shippingAddress }}</p>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-credit-card me-2"></i>Payment Method
+                </h6>
+                <p class="mb-0">{{ order.paymentMethod | titlecase }}</p>
+              </div>
+            </div>
+
+            <!-- Order Items -->
+            <h6 class="text-muted mb-3">
+              <i class="fas fa-shopping-bag me-2"></i>Items Ordered ({{ order.items.length }})
+            </h6>
+            
+            @for (item of order.items; track item.productId) {
+              <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                <img [src]="item.imageUrl" [alt]="item.productName" 
+                     class="me-3 rounded" 
+                     style="width: 60px; height: 60px; object-fit: cover;"
+                     onerror="this.src='https://via.placeholder.com/60x60?text=No+Image'">
+                <div class="flex-grow-1">
+                  <h6 class="mb-1">{{ item.productName }}</h6>
+                  <p class="text-muted mb-0">
+                    <small>Quantity: {{ item.quantity }} × ${{ item.price.toFixed(2) }}</small>
+                  </p>
+                </div>
+                <div class="text-end">
+                  <strong>${{ (item.price * item.quantity).toFixed(2) }}</strong>
+                </div>
+              </div>
+            }
+
+            <!-- Order Totals -->
+            <div class="row mt-4">
+              <div class="col-md-6 offset-md-6">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Subtotal:</span>
+                  <span>${{ order.subtotal.toFixed(2) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Shipping:</span>
+                  <span>
+                    @if (order.shipping === 0) {
+                      <span class="text-success">FREE</span>
+                    } @else {
+                      ${{ order.shipping.toFixed(2) }}
+                    }
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Tax:</span>
+                  <span>${{ order.tax.toFixed(2) }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fw-bold fs-5">
+                  <span>Total:</span>
+                  <span class="text-success">${{ order.total.toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h6 class="card-title">
+              <i class="fas fa-info-circle me-2 text-info"></i>What's Next?
+            </h6>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2">
+                <i class="fas fa-envelope me-2 text-muted"></i>
+                You'll receive an email confirmation shortly
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-box me-2 text-muted"></i>
+                Your order will be processed within 1-2 business days
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-truck me-2 text-muted"></i>
+                Estimated delivery: 5-7 business days
+              </li>
+              <li class="mb-0">
+                <i class="fas fa-bell me-2 text-muted"></i>
+                We'll notify you when your order ships
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row text-center">
+          <div class="col-md-4 mb-3">
+            <a routerLink="/orders" class="btn btn-outline-primary w-100">
+              <i class="fas fa-list me-2"></i>View All Orders
+            </a>
+          </div>
+          <div class="col-md-4 mb-3">
+            <a routerLink="/products" class="btn btn-outline-secondary w-100">
+              <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+            </a>
+          </div>
+          <div class="col-md-4 mb-3">
+            <button class="btn btn-outline-info w-100" (click)="printOrder()">
+              <i class="fas fa-print me-2"></i>Print Receipt
+            </button>
+          </div>
+        </div>
+
+        <!-- Support Information -->
+        <div class="alert alert-light text-center mt-4">
+          <small class="text-muted">
+            <i class="fas fa-question-circle me-1"></i>
+            Need help? Contact our support team at 
+            <a href="mailto:support@myshop.com" class="text-decoration-none">support&#64;myshop.com</a>
+            or call 1-800-MYSHOP
+          </small>
+        </div>
+
+      } @else {
+        <!-- Loading or Error State -->
+        <div class="text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x text-warning mb-4"></i>
+          <h4>Order Information Not Found</h4>
+          <p class="text-muted mb-4">We couldn't find your order details.</p>
+          <div class="d-flex justify-content-center gap-3">
+            <a routerLink="/orders" class="btn btn-primary">
+              <i class="fas fa-list me-2"></i>View Your Orders
+            </a>
+            <a routerLink="/products" class="btn btn-outline-secondary">
+              <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

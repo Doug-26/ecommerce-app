@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './product-details.html',
   styleUrl: './product-details.scss'
 })
-export class ProductDetails {
+export class ProductDetailsComponent {
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);

@@ -1,1 +1,164 @@
-<p>checkout-payment works!</p>
+<div class="payment-container">
+  <h4 class="mb-4">Payment Information</h4>
+
+  <!-- Saved Payment Methods -->
+  @if (savedPaymentMethods.length > 0) {
+    <div class="mb-4">
+      <h6>Choose from saved payment methods:</h6>
+      @for (payment of savedPaymentMethods; track payment.id) {
+        <div class="card mb-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ payment.type | titlecase }}</strong><br>
+                @if (payment.cardNumber) {
+                  {{ maskCardNumber(payment.cardNumber) }}<br>
+                  Expires: {{ payment.expiryMonth }}/{{ payment.expiryYear }}
+                }
+              </div>
+              <button class="btn btn-outline-primary btn-sm" (click)="selectSavedPayment(payment)">
+                Use This Card
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Payment Type Selection -->
+  <div class="mb-4">
+    <h6>Select Payment Method:</h6>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" 
+                 id="creditCard" value="credit_card" 
+                 [checked]="selectedPaymentType === 'credit_card'"
+                 (change)="onPaymentTypeChange('credit_card')">
+          <label class="form-check-label" for="creditCard">
+            <i class="fas fa-credit-card me-2"></i>Credit Card
+          </label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" 
+                 id="debitCard" value="debit_card" 
+                 [checked]="selectedPaymentType === 'debit_card'"
+                 (change)="onPaymentTypeChange('debit_card')">
+          <label class="form-check-label" for="debitCard">
+            <i class="fas fa-credit-card me-2"></i>Debit Card
+          </label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" 
+                 id="paypal" value="paypal" 
+                 [checked]="selectedPaymentType === 'paypal'"
+                 (change)="onPaymentTypeChange('paypal')">
+          <label class="form-check-label" for="paypal">
+            <i class="fab fa-paypal me-2"></i>PayPal
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Form -->
+  @if (selectedPaymentType !== 'paypal') {
+    <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label for="cardholderName" class="form-label">Cardholder Name *</label>
+        <input type="text" class="form-control" id="cardholderName" 
+               formControlName="cardholderName"
+               [class.is-invalid]="isFieldInvalid('cardholderName')">
+        @if (isFieldInvalid('cardholderName')) {
+          <div class="invalid-feedback">{{ getFieldError('cardholderName') }}</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label for="cardNumber" class="form-label">Card Number *</label>
+        <input type="text" class="form-control" id="cardNumber" 
+               formControlName="cardNumber" placeholder="1234 5678 9012 3456"
+               maxlength="16"
+               [class.is-invalid]="isFieldInvalid('cardNumber')">
+        @if (isFieldInvalid('cardNumber')) {
+          <div class="invalid-feedback">{{ getFieldError('cardNumber') }}</div>
+        }
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="expiryMonth" class="form-label">Expiry Month *</label>
+          <select class="form-select" id="expiryMonth" formControlName="expiryMonth"
+                  [class.is-invalid]="isFieldInvalid('expiryMonth')">
+            <option value="">Month</option>
+            @for (month of [1,2,3,4,5,6,7,8,9,10,11,12]; track month) {
+              <option [value]="month">{{ month.toString().padStart(2, '0') }}</option>
+            }
+          </select>
+          @if (isFieldInvalid('expiryMonth')) {
+            <div class="invalid-feedback">{{ getFieldError('expiryMonth') }}</div>
+          }
+        </div>
+        <div class="col-md-4">
+          <label for="expiryYear" class="form-label">Expiry Year *</label>
+          <select class="form-select" id="expiryYear" formControlName="expiryYear"
+                  [class.is-invalid]="isFieldInvalid('expiryYear')">
+            <option value="">Year</option>
+            @for (year of getYearOptions(); track year) {
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+          @if (isFieldInvalid('expiryYear')) {
+            <div class="invalid-feedback">{{ getFieldError('expiryYear') }}</div>
+          }
+        </div>
+        <div class="col-md-4">
+          <label for="cvv" class="form-label">CVV *</label>
+          <input type="text" class="form-control" id="cvv" 
+                 formControlName="cvv" placeholder="123" maxlength="4"
+                 [class.is-invalid]="isFieldInvalid('cvv')">
+          @if (isFieldInvalid('cvv')) {
+            <div class="invalid-feedback">{{ getFieldError('cvv') }}</div>
+          }
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" (click)="onBack.emit()">
+          <i class="fas fa-arrow-left me-2"></i>Back to Shipping
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Continue to Review <i class="fas fa-arrow-right ms-2"></i>
+        </button>
+      </div>
+    </form>
+  } @else {
+    <!-- PayPal Option -->
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <i class="fab fa-paypal fa-3x text-primary mb-3"></i>
+        <p>You will be redirected to PayPal to complete your payment securely.</p>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack.emit()">
+        <i class="fas fa-arrow-left me-2"></i>Back to Shipping
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="isLoading">
+        @if (isLoading) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        Continue to Review <i class="fas fa-arrow-right ms-2"></i>
+      </button>
+    </div>
+  }
+</div>

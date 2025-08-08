@@ -9,12 +9,12 @@ export const routes: Routes = [
   },
   {
     path: 'products',
-    loadComponent: () => import('./products/product-list/product-list').then(m => m.ProductList),
+    loadComponent: () => import('./products/product-list/product-list').then(m => m.ProductListComponent),
     title: 'Products - MyShop'
   },
   {
     path: 'products/:id',
-    loadComponent: () => import('./products/product-details/product-details').then(m => m.ProductDetails),
+    loadComponent: () => import('./products/product-details/product-details').then(m => m.ProductDetailsComponent),
     title: 'Product Details - MyShop'
   },
   {
@@ -27,6 +27,12 @@ export const routes: Routes = [
     loadComponent: () => import('./checkout/checkout').then(m => m.CheckoutComponent),
     canActivate: [authGuard],
     title: 'Checkout - MyShop'
+  },
+  {
+    path: 'checkout/success',
+    loadComponent: () => import('./checkout/checkout-success/checkout-success').then(m => m.CheckoutSuccessComponent),
+    canActivate: [authGuard],
+    title: 'Order Confirmation - MyShop'
   },
   {
     path: 'orders',

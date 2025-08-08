@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss'
 })
-export class ProductList {
+export class ProductListComponent {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);

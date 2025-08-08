@@ -1,0 +1,76 @@
+.success-icon {
+  animation: bounce 1s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.badge {
+  font-size: 0.85em;
+  padding: 0.5em 0.75em;
+}
+
+.font-monospace {
+  background-color: #f8f9fa;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.border-bottom:last-child {
+  border-bottom: none !important;
+}
+
+@media (max-width: 768px) {
+  .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .success-icon {
+    font-size: 3rem !important;
+  }
+  
+  .lead {
+    font-size: 1rem;
+  }
+}
+
+.alert-light {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+img {
+  border: 1px solid #dee2e6;
+}
+
+.text-success {
+  color: #198754 !important;
+}
+
+.list-unstyled li {
+  padding: 0.25rem 0;
+}
