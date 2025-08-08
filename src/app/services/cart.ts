@@ -28,6 +28,7 @@ export class CartService {
     this._cartItems().reduce((total, item) => total + (item.product.price * item.quantity), 0)
   );
   isLoading = computed(() => this._isLoading());
+  cartItemCount = computed(() => this.totalItems());
 
   constructor() {
     // Effect to handle user login/logout

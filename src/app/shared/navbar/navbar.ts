@@ -1,29 +1,32 @@
-import { Component, inject, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { CartService } from '../../services/cart';
-import { AuthService } from '../../services/auth.service';
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart';
 import { ClickOutsideDirective } from '../../directives/click-outside-directive';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterModule, CommonModule, ClickOutsideDirective],
+  standalone: true,
+  imports: [CommonModule, RouterModule, ClickOutsideDirective],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss'
 })
-export class Navbar {
-  private cartService = inject(CartService);
+export class NavbarComponent {
   private authService = inject(AuthService);
-  private platformId = inject(PLATFORM_ID);
-  
+  private cartService = inject(CartService);
+
+  // Expose signals for template
+  currentUser = this.authService.currentUser;
+  isAuthenticated = this.authService.isAuthenticated;
   totalItems = this.cartService.totalItems;
   
-  // Expose auth service properties for template
-  isLoggedIn = this.authService.isLoggedIn;
-  currentUser = this.authService.currentUser;
-
-  // Add dropdown state
   dropdownOpen = false;
+
+  // Methods used in template
+  isLoggedIn(): boolean {
+    return this.isAuthenticated();
+  }
 
   toggleDropdown(): void {
     this.dropdownOpen = !this.dropdownOpen;
@@ -36,19 +39,5 @@ export class Navbar {
   logout(): void {
     this.authService.logout();
     this.closeDropdown();
-  }
-
-  // Initialize Bootstrap after view init
-  ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      // Ensure Bootstrap is loaded
-      setTimeout(() => {
-        if (typeof (window as any).bootstrap !== 'undefined') {
-          console.log('Bootstrap is loaded');
-        } else {
-          console.warn('Bootstrap JavaScript not loaded');
-        }
-      }, 100);
-    }
   }
 }

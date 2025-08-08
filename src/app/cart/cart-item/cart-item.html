@@ -1,65 +1,164 @@
 <div class="container my-4">
-  <h3>Your Cart ({{ totalItems() }} items)</h3>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Your Cart ({{ totalItems() }} items)</h3>
+    @if (isLoading()) {
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    }
+  </div>
+
   @if (cartItems().length) {
     <div class="row">
-      @for (item of cartItems(); track item.product.id) {
-        <div class="col-12 mb-3">
-          <div class="card">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-md-2">
-                  <img [src]="item.product.imageUrl" [alt]="item.product.name" 
-                       class="img-fluid rounded" style="max-height: 80px;">
-                </div>
-                <div class="col-md-4">
-                  <h6 class="mb-1">{{ item.product.name }}</h6>
-                  <p class="text-muted mb-0">${{ item.product.price }}</p>
-                </div>
-                <div class="col-md-3">
-                  <div class="input-group">
-                    <button class="btn btn-outline-secondary" 
-                            (click)="updateQuantity(item.product.id, item.quantity - 1)">-</button>
-                    <input type="number" class="form-control text-center" 
-                           [value]="item.quantity" readonly>
-                    <button class="btn btn-outline-secondary" 
-                            (click)="updateQuantity(item.product.id, item.quantity + 1)">+</button>
+      <!-- Cart Items -->
+      <div class="col-lg-8">
+        @for (item of cartItems(); track item.product.id) {
+          <div class="mb-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col-md-2">
+                    <img [src]="item.product.imageUrl" [alt]="item.product.name" 
+                         class="img-fluid rounded" style="max-height: 80px; object-fit: cover;">
                   </div>
-                </div>
-                <div class="col-md-2 text-end">
-                  <strong>${{ (item.product.price * item.quantity).toFixed(2) }}</strong>
-                </div>
-                <div class="col-md-1">
-                  <button class="btn btn-sm btn-danger" (click)="removeItem(item.product.id)">
-                    <i class="fas fa-trash"></i>
-                  </button>
+                  <div class="col-md-4">
+                    <h6 class="mb-1">{{ item.product.name }}</h6>
+                    <p class="text-muted mb-0">${{ item.product.price.toFixed(2) }}</p>
+                    @if (item.product.stock && item.product.stock < 10) {
+                      <small class="text-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Only {{ item.product.stock }} left in stock
+                      </small>
+                    }
+                  </div>
+                  <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                      <button class="btn btn-outline-secondary" 
+                              (click)="updateQuantity(item.product.id, item.quantity - 1)"
+                              [disabled]="item.quantity <= 1">
+                        <i class="fas fa-minus"></i>
+                      </button>
+                      <input type="number" class="form-control text-center" 
+                             [value]="item.quantity" 
+                             (change)="updateQuantity(item.product.id, +$any($event.target).value)"
+                             min="1" max="99">
+                      <button class="btn btn-outline-secondary" 
+                              (click)="updateQuantity(item.product.id, item.quantity + 1)"
+                              [disabled]="item.product.stock && item.quantity >= item.product.stock">
+                        <i class="fas fa-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-2 text-end">
+                    <strong>${{ (item.product.price * item.quantity).toFixed(2) }}</strong>
+                  </div>
+                  <div class="col-md-1 text-end">
+                    <button class="btn btn-sm btn-outline-danger" 
+                            (click)="removeItem(item.product.id)"
+                            title="Remove item">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      }
-    </div>
-    
-    <div class="row mt-4">
-      <div class="col-md-8">
-        <button class="btn btn-outline-danger" (click)="clearCart()">
-          <i class="fas fa-trash me-2"></i>Clear Cart
-        </button>
+        }
       </div>
-      <div class="col-md-4 text-end">
-        <h4>Total: ${{ cartTotal().toFixed(2) }}</h4>
-        <button class="btn btn-success btn-lg">
-          <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
-        </button>
+
+      <!-- Cart Summary Sidebar -->
+      <div class="col-lg-4">
+        <div class="card sticky-top" style="top: 1rem;">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-receipt me-2"></i>Order Summary
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span>Subtotal ({{ totalItems() }} items):</span>
+              <span>${{ cartTotal().toFixed(2) }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Shipping:</span>
+              <span>
+                @if (cartTotal() >= 100) {
+                  <span class="text-success">FREE</span>
+                } @else {
+                  <span>$9.99</span>
+                }
+              </span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Tax (estimated):</span>
+              <span>${{ (cartTotal() * 0.085).toFixed(2) }}</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between fw-bold fs-5">
+              <span>Total:</span>
+              <span>
+                ${{ (cartTotal() + (cartTotal() >= 100 ? 0 : 9.99) + (cartTotal() * 0.085)).toFixed(2) }}
+              </span>
+            </div>
+
+            @if (cartTotal() < 100) {
+              <div class="alert alert-info mt-3 p-2">
+                <small>
+                  <i class="fas fa-truck me-1"></i>
+                  Add ${{ (100 - cartTotal()).toFixed(2) }} more for free shipping!
+                </small>
+              </div>
+            }
+
+            <!-- Checkout Button -->
+            <button class="btn btn-success btn-lg w-100 mt-3" 
+                    (click)="proceedToCheckout()"
+                    [disabled]="isLoading()">
+              @if (isLoading()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              } @else {
+                <i class="fas fa-credit-card me-2"></i>
+              }
+              Proceed to Checkout
+            </button>
+
+            <!-- Continue Shopping -->
+            <a routerLink="/products" class="btn btn-outline-primary w-100 mt-2">
+              <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+            </a>
+
+            <!-- Clear Cart -->
+            <button class="btn btn-outline-danger w-100 mt-2" 
+                    (click)="clearCart()"
+                    [disabled]="isLoading()">
+              <i class="fas fa-trash me-2"></i>Clear Cart
+            </button>
+          </div>
+        </div>
+
+        <!-- Security & Trust Badges -->
+        <div class="card mt-3">
+          <div class="card-body text-center py-2">
+            <small class="text-muted">
+              <i class="fas fa-shield-alt me-1 text-success"></i>
+              Secure Checkout
+            </small>
+            <br>
+            <small class="text-muted">
+              <i class="fas fa-truck me-1 text-info"></i>
+              Free shipping on orders over $100
+            </small>
+          </div>
+        </div>
       </div>
     </div>
   } @else {
     <div class="text-center py-5">
-      <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+      <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
       <h4>Your cart is empty</h4>
-      <p class="text-muted">Add some products to get started!</p>
-      <a routerLink="/products" class="btn btn-primary">
-        <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+      <p class="text-muted mb-4">Discover amazing products and add them to your cart!</p>
+      <a routerLink="/products" class="btn btn-primary btn-lg">
+        <i class="fas fa-shopping-bag me-2"></i>Start Shopping
       </a>
     </div>
   }

@@ -1,7 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -9,46 +9,85 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
-  styleUrls: ['./login.scss']
+  styleUrl: './login.scss'
 })
-export class LoginComponent {
-  loginForm: FormGroup;
-  loading = signal(false);
-  error = signal('');
+export class LoginComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  constructor(
-    private formBuilder: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
-    this.loginForm = this.formBuilder.group({
+  loginForm: FormGroup;
+  loading = signal(false);       // Changed to signal
+  error = signal('');           // Changed to signal
+  returnUrl = '/';
+
+  constructor() {
+    this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
-  onSubmit(): void {
-    if (this.loginForm.invalid) {
-      return;
+  ngOnInit(): void {
+    // Get return URL from route parameters or default to '/'
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+    
+    // If user is already logged in, redirect to return URL
+    if (this.authService.currentUser()) {
+      this.router.navigate([this.returnUrl]);
     }
+  }
 
-    this.loading.set(true);
-    this.error.set('');
+  // Add getter for form controls (used in template as f['email'], f['password'])
+  get f() {
+    return this.loginForm.controls;
+  }
 
-    this.authService.login(this.loginForm.value).subscribe({
-      next: () => {
-        this.router.navigate(['/products']);
-      },
-      error: (error) => {
-        this.error.set(error.message || 'Login failed');
-        this.loading.set(false);
-      }
+  onSubmit(): void {
+    if (this.loginForm.valid) {
+      this.loading.set(true);
+      this.error.set('');
+      
+      const { email, password } = this.loginForm.value;
+      
+      this.authService.login(email, password).subscribe({
+        next: (user) => {
+          this.loading.set(false);
+          // Navigate to return URL after successful login
+          this.router.navigate([this.returnUrl]);
+        },
+        error: (error) => {
+          this.loading.set(false);
+          this.error.set('Invalid email or password. Please try again.');
+          console.error('Login error:', error);
+        }
+      });
+    } else {
+      this.markFormGroupTouched();
+    }
+  }
+
+  private markFormGroupTouched(): void {
+    Object.keys(this.loginForm.controls).forEach(key => {
+      const control = this.loginForm.get(key);
+      control?.markAsTouched();
     });
   }
 
-  // Getter to easily access form controls in the template
-  get f() {
-    return this.loginForm.controls;
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.loginForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.loginForm.get(fieldName);
+    if (field?.errors) {
+      if (field.errors['required']) return `${fieldName} is required`;
+      if (field.errors['email']) return 'Please enter a valid email address';
+      if (field.errors['minlength']) return `${fieldName} must be at least 6 characters`;
+    }
+    return '';
   }
 }
 

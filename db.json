@@ -1,7 +1,7 @@
 {
   "products": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Wireless Headphones",
       "description": "High-quality noise-canceling wireless headphones",
       "price": 129.99,
@@ -10,7 +10,7 @@
       "stock": 20
     },
     {
-      "id": 2,
+      "id": "2",
       "name": "Smart Watch",
       "description": "Touchscreen fitness smart watch with heart-rate monitor",
       "price": 89.99,
@@ -19,7 +19,7 @@
       "stock": 35
     },
     {
-      "id": 3,
+      "id": "3",
       "name": "Gaming Mouse",
       "description": "RGB gaming mouse with 6 programmable buttons",
       "price": 49.99,
@@ -30,7 +30,7 @@
   ],
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Christian Jay De La Cruz",
       "email": "cjdelacruz267@gmail.com",
       "password": "cjdelacruz",
@@ -38,7 +38,7 @@
       "address": "B14 L10 Green Valley Barangay Pacol"
     },
     {
-      "id": 2,
+      "id": "5c3e",
       "name": "Test User",
       "email": "test@example.com",
       "password": "123456",
@@ -48,35 +48,32 @@
   ],
   "cart": [
     {
-      "id": "e593",
+      "id": "3410",
       "userId": 1,
-      "productId": 1,
+      "productId": "1",
       "quantity": 1
     },
     {
-      "id": "a9a4",
-      "userId": 2,
-      "productId": 2,
+      "id": "8332",
+      "userId": 1,
+      "productId": "2",
       "quantity": 1
     }
   ],
-  "orders": [
+  "orders": [],
+  "addresses": [
     {
-      "id": 1,
-      "userId": 1,
-      "items": [
-        {
-          "productId": 1,
-          "productName": "Wireless Headphones",
-          "quantity": 1,
-          "price": 129.99,
-          "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop&crop=center"
-        }
-      ],
-      "total": 129.99,
-      "status": "delivered",
-      "orderDate": "2024-07-20T10:30:00Z",
-      "shippingAddress": "123 Main St, City, State 12345"
+      "id": "db44",
+      "firstName": "Christian",
+      "lastName": "Jay De La Cruz",
+      "address": "B14 L10 Green Valley Barangay Pacol",
+      "city": "Naga City",
+      "state": "Philippines",
+      "zipCode": "4400",
+      "country": "Philippines",
+      "phone": "09516909596",
+      "userId": "1"
     }
-  ]
+  ],
+  "payment-methods": []
 }

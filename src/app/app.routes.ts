@@ -1,34 +1,51 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './auth/login/login';
-import { RegisterComponent } from './auth/register/register';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/products', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { 
-    path: 'products', 
-    loadComponent: () => import('./products/product-list/product-list').then(m => m.ProductList)
+  {
+    path: '',
+    redirectTo: '/products',
+    pathMatch: 'full'
   },
   {
-    path: 'products/:productId',
-    loadComponent: () => import('./products/product-details/product-details').then(m => m.ProductDetails)
+    path: 'products',
+    loadComponent: () => import('./products/product-list/product-list').then(m => m.ProductList),
+    title: 'Products - MyShop'
+  },
+  {
+    path: 'products/:id',
+    loadComponent: () => import('./products/product-details/product-details').then(m => m.ProductDetails),
+    title: 'Product Details - MyShop'
   },
   {
     path: 'cart',
-    loadComponent: () => import('./cart/cart-item/cart-item').then(m => m.CartItem),
-    canActivate: [authGuard]
+    loadComponent: () => import('./cart/cart-item/cart-item').then(m => m.CartItemComponent),
+    title: 'Shopping Cart - MyShop'
+  },
+  {
+    path: 'checkout',
+    loadComponent: () => import('./checkout/checkout').then(m => m.CheckoutComponent),
+    canActivate: [authGuard],
+    title: 'Checkout - MyShop'
   },
   {
     path: 'orders',
     loadComponent: () => import('./order/order').then(m => m.OrdersComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
+    title: 'My Orders - MyShop'
   },
   {
-    path: 'profile',
-    redirectTo: '/products', // Keep this as redirect for now
+    path: 'login',
+    loadComponent: () => import('./auth/login/login').then(m => m.LoginComponent),
+    title: 'Login - MyShop'
   },
-  // Wildcard route - must be last
-  { path: '**', redirectTo: '/products' }
+  {
+    path: 'register',
+    loadComponent: () => import('./auth/register/register').then(m => m.RegisterComponent),
+    title: 'Register - MyShop'
+  },
+  {
+    path: '**',
+    redirectTo: '/products'
+  }
 ];

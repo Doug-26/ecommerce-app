@@ -1,83 +1,138 @@
-import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/user';
+import { Observable, of, throwError, map, catchError, switchMap } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
+import { User, LoginResponse } from '../models/user';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000';
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+  private http = inject(HttpClient);
+  private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
   
-  // Signal for reactive UI updates
-  public isLoggedIn = signal<boolean>(false);
-  public currentUser = signal<User | null>(null);
+  private readonly API_URL = 'http://localhost:3000';
+  private readonly STORAGE_KEY = 'ecommerce-user';
 
-  constructor(private http: HttpClient, private router: Router) {
-    // Check if user is already logged in on app start (only in browser)
+  private _currentUser = signal<User | null>(null);
+  
+  currentUser = computed(() => this._currentUser());
+  isAuthenticated = computed(() => !!this._currentUser());
+
+  constructor() {
+    this.loadUserFromStorage();
+  }
+
+  private loadUserFromStorage(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        this.currentUserSubject.next(user);
-        this.currentUser.set(user);
-        this.isLoggedIn.set(true);
+      const userJson = localStorage.getItem(this.STORAGE_KEY);
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          this._currentUser.set(user);
+        } catch (error) {
+          console.error('Error parsing user from localStorage:', error);
+          localStorage.removeItem(this.STORAGE_KEY);
+        }
       }
     }
   }
 
-  login(credentials: LoginRequest): Observable<User> {
-    return this.http.get<User[]>(`${this.apiUrl}/users`).pipe(
+  private saveUserToStorage(user: User): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+    }
+  }
+
+  private clearUserFromStorage(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem(this.STORAGE_KEY);
+    }
+  }
+
+  // Fix the login method to return Observable<User>
+  login(email: string, password: string): Observable<User> {
+    return this.http.get<User[]>(`${this.API_URL}/users?email=${email}&password=${password}`).pipe(
       map(users => {
-        const user = users.find(u => 
-          u.email === credentials.email && u.password === credentials.password
-        );
-        if (!user) {
-          throw new Error('Invalid email or password');
+        if (users.length === 0) {
+          throw new Error('Invalid credentials');
         }
+        
+        const user = users[0];
+        this._currentUser.set(user);
+        this.saveUserToStorage(user);
+        
+        console.log('User logged in successfully:', user);
         return user;
       }),
-      tap(user => {
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.setItem('currentUser', JSON.stringify(user));
-        }
-        this.currentUserSubject.next(user);
-        this.currentUser.set(user);
-        this.isLoggedIn.set(true);
+      catchError(error => {
+        console.error('Login failed:', error);
+        return throwError(() => new Error('Login failed. Please check your credentials.'));
       })
     );
   }
 
-  register(userData: RegisterRequest): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/users`, userData).pipe(
-      tap(user => {
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.setItem('currentUser', JSON.stringify(user));
+  // Simplified register method in AuthService
+  register(userData: Omit<User, 'id'>): Observable<User> {
+    return this.http.get<User[]>(`${this.API_URL}/users?email=${userData.email}`).pipe(
+      switchMap(existingUsers => {
+        if (existingUsers.length > 0) {
+          return throwError(() => new Error('Email already exists'));
         }
-        this.currentUserSubject.next(user);
-        this.currentUser.set(user);
-        this.isLoggedIn.set(true);
+        
+        return this.http.post<User>(`${this.API_URL}/users`, userData);
+      }),
+      map(newUser => {
+        this._currentUser.set(newUser);
+        this.saveUserToStorage(newUser);
+        console.log('User registered successfully:', newUser);
+        return newUser;
+      }),
+      catchError(error => {
+        console.error('Registration failed:', error);
+        return throwError(() => new Error('Registration failed. Please try again.'));
       })
     );
   }
 
   logout(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('currentUser');
-    }
-    this.currentUserSubject.next(null);
-    this.currentUser.set(null);
-    this.isLoggedIn.set(false);
-    this.router.navigate(['/login']);
+    this._currentUser.set(null);
+    this.clearUserFromStorage();
+    console.log('User logged out');
+    this.router.navigate(['/']);
   }
 
-  get currentUserValue(): User | null {
-    return this.currentUserSubject.value;
+  // Helper method to check if user is logged in
+  isLoggedIn(): boolean {
+    return !!this._currentUser();
+  }
+
+  // Get current user data
+  getCurrentUser(): User | null {
+    return this._currentUser();
+  }
+
+  // Update user profile
+  updateProfile(userData: Partial<User>): Observable<User> {
+    const currentUser = this._currentUser();
+    if (!currentUser) {
+      return throwError(() => new Error('No user logged in'));
+    }
+
+    const updatedUser = { ...currentUser, ...userData };
+    
+    return this.http.put<User>(`${this.API_URL}/users/${currentUser.id}`, updatedUser).pipe(
+      map(user => {
+        this._currentUser.set(user);
+        this.saveUserToStorage(user);
+        return user;
+      }),
+      catchError(error => {
+        console.error('Profile update failed:', error);
+        return throwError(() => new Error('Failed to update profile'));
+      })
+    );
   }
 }

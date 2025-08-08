@@ -1,0 +1,55 @@
+.cart-item {
+  transition: box-shadow 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+}
+
+.sticky-top {
+  z-index: 1020;
+}
+
+.input-group-sm {
+  .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .form-control {
+    max-width: 70px;
+  }
+}
+
+.alert-info {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+  
+  &:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+  }
+}
+
+.security-badges {
+  .fa-shield-alt {
+    color: #28a745 !important;
+  }
+  
+  .fa-truck {
+    color: #17a2b8 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sticky-top {
+    position: relative !important;
+    top: auto !important;
+  }
+}
