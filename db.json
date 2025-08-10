@@ -47,26 +47,57 @@
     }
   ],
   "cart": [
+    { "id": "u1", "userId": "1", "items": [] }
+  ],
+  "orders": [
     {
-      "id": "3f9c",
-      "userId": 1,
-      "productId": "1",
-      "quantity": 1
-    },
-    {
-      "id": "4055",
-      "userId": 1,
-      "productId": "2",
-      "quantity": 1
+      "id": "3ab6",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "1",
+          "productName": "Wireless Headphones",
+          "quantity": 1,
+          "price": 129.99,
+          "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop&crop=center"
+        },
+        {
+          "productId": "2",
+          "productName": "Smart Watch",
+          "quantity": 1,
+          "price": 89.99,
+          "imageUrl": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=200&fit=crop&crop=center"
+        }
+      ],
+      "total": 238.67830000000004,
+      "subtotal": 219.98000000000002,
+      "shipping": 0,
+      "tax": 18.698300000000003,
+      "status": "pending",
+      "orderDate": "2025-08-10T13:12:30.660Z",
+      "shippingAddress": "B14 L10, Naga City, Philippines 4400",
+      "paymentMethod": "credit_card",
+      "trackingNumber": "TN315506619S8P"
     }
   ],
-  "orders": [],
   "addresses": [
     {
-      "id": "db44",
+      "id": "30f1",
       "firstName": "Christian",
-      "lastName": "Jay De La Cruz",
-      "address": "B14 L10 Green Valley Barangay Pacol",
+      "lastName": " De La Cruz",
+      "address": "B14 L10",
+      "city": "Naga City",
+      "state": "Philippines",
+      "zipCode": "4400",
+      "country": "Philippines",
+      "phone": "09516909596",
+      "userId": "1"
+    },
+    {
+      "id": "30c3",
+      "firstName": "Christian",
+      "lastName": " De La Cruz",
+      "address": "B14 L10",
       "city": "Naga City",
       "state": "Philippines",
       "zipCode": "4400",
@@ -75,5 +106,16 @@
       "userId": "1"
     }
   ],
-  "payment-methods": []
+  "payment-methods": [
+    {
+      "id": "e363",
+      "type": "credit_card",
+      "cardNumber": "1234678910111223",
+      "expiryMonth": "12",
+      "expiryYear": "2034",
+      "cvv": "123",
+      "cardholderName": "Christian Jay Dela Cruz",
+      "userId": "1"
+    }
+  ]
 }

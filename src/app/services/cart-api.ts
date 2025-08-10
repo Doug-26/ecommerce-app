@@ -1,42 +1,42 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, forkJoin, switchMap, map } from 'rxjs';
+import { environment } from '../app.config';
+import { Observable, of, switchMap, map } from 'rxjs';
 import { ServerCartItem } from '../models/cart-item';
+import { AuthService } from './auth.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+interface ServerCartDoc { id: string; userId: string; items: ServerCartItem[]; }
+
+@Injectable({ providedIn: 'root' })
 export class CartApiService {
-  private apiUrl = 'http://localhost:3000/cart';
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
+  private api = environment.apiUrl;
 
-  getUserCart(userId: number): Observable<ServerCartItem[]> {
-    return this.http.get<ServerCartItem[]>(`${this.apiUrl}?userId=${userId}`);
+  private uid(): string {
+    return this.auth.currentUser()?.id?.toString() ?? '';
   }
 
-  addToCart(cartItem: Omit<ServerCartItem, 'id'>): Observable<ServerCartItem> {
-    return this.http.post<ServerCartItem>(this.apiUrl, cartItem);
+  private getOrCreate(): Observable<ServerCartDoc> {
+    const userId = this.uid();
+    if (!userId) return of({ id: '', userId: '', items: [] } as ServerCartDoc);
+    return this.http.get<ServerCartDoc[]>(`${this.api}/cart?userId=${encodeURIComponent(userId)}`).pipe(
+      switchMap(rows => rows.length
+        ? of(rows[0])
+        : this.http.post<ServerCartDoc>(`${this.api}/cart`, { userId, items: [] }))
+    );
   }
 
-  updateCartItem(id: string | number, quantity: number): Observable<ServerCartItem> {
-    return this.http.patch<ServerCartItem>(`${this.apiUrl}/${id}`, { quantity });
+  // Load the items array for current user
+  load(): Observable<ServerCartItem[]> {
+    return this.getOrCreate().pipe(map(c => c.items ?? []));
   }
 
-  removeFromCart(id: string | number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  clearUserCart(userId: number): Observable<void> {
-    // Note: JSON Server doesn't support bulk delete by query, so we need to handle this differently
-    return this.getUserCart(userId).pipe(
-      switchMap(items => {
-        if (items.length === 0) {
-          return of(null);
-        }
-        const deleteRequests = items.map(item => this.removeFromCart(item.id!));
-        return forkJoin(deleteRequests);
-      }),
-      map(() => void 0)
+  // Replace the items array for current user
+  save(items: ServerCartItem[]): Observable<ServerCartItem[]> {
+    return this.getOrCreate().pipe(
+      switchMap(c => this.http.patch<ServerCartDoc>(`${this.api}/cart/${c.id}`, { items })),
+      map(doc => doc.items ?? [])
     );
   }
 }

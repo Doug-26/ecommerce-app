@@ -5,7 +5,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from './auth.service';
 import { CartApiService } from './cart-api';
 import { ProductService } from './product';
-import { forkJoin, of, switchMap, map } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -17,313 +17,130 @@ export class CartService {
   private cartApiService = inject(CartApiService);
   private productService = inject(ProductService);
 
-  // Initialize signals
   private _cartItems = signal<CartItem[]>([]);
   private _isLoading = signal<boolean>(false);
-  
-  // Computed properties
+
   cartItems = computed(() => this._cartItems());
-  totalItems = computed(() => this._cartItems().reduce((total, item) => total + item.quantity, 0));
-  cartTotal = computed(() => 
-    this._cartItems().reduce((total, item) => total + (item.product.price * item.quantity), 0)
-  );
+  totalItems = computed(() => this._cartItems().reduce((t, i) => t + i.quantity, 0));
+  cartTotal = computed(() => this._cartItems().reduce((t, i) => t + (i.product.price * i.quantity), 0));
   isLoading = computed(() => this._isLoading());
   cartItemCount = computed(() => this.totalItems());
 
   constructor() {
-    // Effect to handle user login/logout
     effect(() => {
       const user = this.authService.currentUser();
       if (user) {
-        console.log('User logged in, loading server cart for user:', user.id);
-        this.loadServerCart(user.id!);
+        this.loadServerCart();
       } else {
-        console.log('User logged out, loading local cart');
         this.loadLocalCart();
       }
     });
 
-    // Save to localStorage only when user is not logged in
     effect(() => {
-      const cartItems = this._cartItems();
       const user = this.authService.currentUser();
-      
       if (!user && isPlatformBrowser(this.platformId)) {
-        console.log('Saving cart to localStorage:', cartItems);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cartItems));
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._cartItems()));
       }
     });
   }
 
   private loadLocalCart(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      const cartItemsJson = localStorage.getItem(this.STORAGE_KEY);
-      const items = cartItemsJson ? JSON.parse(cartItemsJson) : [];
-      console.log('Loaded local cart:', items);
-      this._cartItems.set(items);
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    const json = localStorage.getItem(this.STORAGE_KEY);
+    const items = json ? JSON.parse(json) : [];
+    this._cartItems.set(items);
   }
 
-  private loadServerCart(userId: string | number): void {
+  private loadServerCart(): void {
     this._isLoading.set(true);
-    console.log('Loading server cart for user:', userId);
-    
-    this.cartApiService.getUserCart(Number(userId)).subscribe({
-      next: (serverItems) => {
-        console.log('Server cart items:', serverItems);
-        if (serverItems.length > 0) {
-          this.populateCartItemsWithProducts(serverItems);
-        } else {
-          // If no server cart, migrate local cart to server
-          this.migrateLocalCartToServer(userId);
-        }
-      },
-      error: (error) => {
-        console.error('Failed to load server cart:', error);
+    this.cartApiService.load().subscribe({
+      next: (serverItems) => this.populateCartItemsWithProducts(serverItems),
+      error: () => {
         this._isLoading.set(false);
-        // Fallback to local cart on error
         this.loadLocalCart();
       }
     });
   }
 
   private populateCartItemsWithProducts(serverItems: ServerCartItem[]): void {
-    // Get all unique product IDs
-    const productIds = [...new Set(serverItems.map(item => item.productId))];
-    
-    // Fetch all products
-    const productRequests = productIds.map(id => 
-      this.productService.getProductById(id)
-    );
+    const productIds = [...new Set(serverItems.map(i => String(i.productId)))];
+    const requests = productIds.map(id => this.productService.getProduct(id)); // <- changed
 
-    forkJoin(productRequests).subscribe({
+    forkJoin(requests).subscribe({
       next: (products) => {
-        const validProducts = products.filter(p => p !== null) as Product[];
-        const cartItems: CartItem[] = [];
+        const valid = (products || []).filter(p => !!p) as Product[];
+        const cartItems: CartItem[] = serverItems
+          .map(si => {
+            const p = valid.find(v => String(v.id) === String(si.productId));
+            return p ? { product: p, quantity: si.quantity } : null;
+          })
+          .filter((x): x is CartItem => !!x);
 
-        serverItems.forEach(serverItem => {
-          const product = validProducts.find(p => p.id === serverItem.productId);
-          if (product) {
-            cartItems.push({
-              product,
-              quantity: serverItem.quantity,
-              userId: serverItem.userId
-            });
-          }
-        });
-
-        console.log('Populated cart items:', cartItems);
         this._cartItems.set(cartItems);
         this._isLoading.set(false);
       },
-      error: (error) => {
-        console.error('Failed to populate cart with products:', error);
+      error: () => {
         this._cartItems.set([]);
         this._isLoading.set(false);
       }
     });
   }
 
-  private migrateLocalCartToServer(userId: string | number): void {
-    const localItems = this.getLocalCartItems();
-    console.log('Migrating local cart to server:', localItems);
-    
-    if (localItems.length === 0) {
-      this._cartItems.set([]);
-      this._isLoading.set(false);
-      return;
-    }
-
-    // Convert local items to server format and save
-    const serverRequests = localItems.map(item => {
-      const serverItem: Omit<ServerCartItem, 'id'> = {
-        userId: Number(userId),
-        productId: item.product.id,
-        quantity: item.quantity
-      };
-      return this.cartApiService.addToCart(serverItem);
-    });
-
-    forkJoin(serverRequests).subscribe({
-      next: (savedItems) => {
-        console.log('Local cart migrated to server:', savedItems);
-        this._cartItems.set(localItems);
-        this._isLoading.set(false);
-        
-        // Clear local storage after successful migration
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.removeItem(this.STORAGE_KEY);
-        }
-      },
-      error: (error) => {
-        console.error('Failed to migrate local cart:', error);
-        this._cartItems.set(localItems);
-        this._isLoading.set(false);
-      }
-    });
+  private toServerItems(): ServerCartItem[] {
+    return this._cartItems().map(ci => ({
+      productId: String(ci.product.id),
+      quantity: ci.quantity
+    }));
   }
 
-  private getLocalCartItems(): CartItem[] {
-    if (isPlatformBrowser(this.platformId)) {
-      const cartItemsJson = localStorage.getItem(this.STORAGE_KEY);
-      return cartItemsJson ? JSON.parse(cartItemsJson) : [];
-    }
-    return [];
+  private saveServerCart(): void {
+    const user = this.authService.currentUser();
+    if (!user) return;
+    this.cartApiService.save(this.toServerItems()).subscribe({ next: () => {}, error: () => {} });
   }
 
   addToCart(product: Product): void {
-    const currentItems = this.cartItems();
-    const existingIndex = currentItems.findIndex(item => item.product.id === product.id);
-    
-    let updatedItems: CartItem[];
-    let newQuantity: number;
-
-    if (existingIndex > -1) {
-      // Update existing item
-      updatedItems = [...currentItems];
-      updatedItems[existingIndex].quantity++;
-      newQuantity = updatedItems[existingIndex].quantity;
+    const items = [...this._cartItems()];
+    const idx = items.findIndex(i => String(i.product.id) === String(product.id));
+    if (idx > -1) {
+      items[idx] = { ...items[idx], quantity: items[idx].quantity + 1 };
     } else {
-      // Add new item
-      const newItem: CartItem = { product, quantity: 1 };
-      updatedItems = [...currentItems, newItem];
-      newQuantity = 1;
+      items.push({ product, quantity: 1 });
     }
+    this._cartItems.set(items);
 
-    // Update local state immediately
-    this._cartItems.set(updatedItems);
-
-    // Sync with server if user is logged in
-    const user = this.authService.currentUser();
-    if (user) {
-      this.syncAddToServer(product, newQuantity, existingIndex > -1);
-    }
-
-    console.log(`Product added to cart: ${product.name}, quantity: ${newQuantity}`);
+    if (this.authService.currentUser()) this.saveServerCart();
   }
 
-  private syncAddToServer(product: Product, quantity: number, isUpdate: boolean): void {
-    const user = this.authService.currentUser();
-    if (!user) return;
+  removeFromCart(productId: string | number): void {
+    const pid = String(productId);
+    const items = this._cartItems().filter(i => String(i.product.id) !== pid);
+    this._cartItems.set(items);
 
-    if (isUpdate) {
-      // Find and update existing server item
-      this.cartApiService.getUserCart(Number(user.id!)).subscribe({
-        next: (serverItems) => {
-          const existingItem = serverItems.find(item => item.productId === product.id);
-          if (existingItem && existingItem.id) {
-            this.cartApiService.updateCartItem(existingItem.id, quantity).subscribe({
-              next: (updated) => console.log('Server cart updated:', updated),
-              error: (error) => console.error('Failed to update server cart:', error)
-            });
-          }
-        },
-        error: (error) => console.error('Failed to get server cart for update:', error)
-      });
-    } else {
-      // Add new item to server
-      const serverItem: Omit<ServerCartItem, 'id'> = {
-        userId: Number(user.id!),
-        productId: product.id,
-        quantity: quantity
-      };
-
-      this.cartApiService.addToCart(serverItem).subscribe({
-        next: (added) => console.log('Item added to server cart:', added),
-        error: (error) => console.error('Failed to add to server cart:', error)
-      });
-    }
+    if (this.authService.currentUser()) this.saveServerCart();
+    else if (isPlatformBrowser(this.platformId)) localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
   }
 
-  removeFromCart(productId: number): void {
-    const updatedItems = this.cartItems().filter(item => item.product.id !== productId);
-    this._cartItems.set(updatedItems);
+  updateQuantity(productId: string | number, quantity: number): void {
+    if (quantity <= 0) return this.removeFromCart(productId);
 
-    // Remove from server if user is logged in
-    const user = this.authService.currentUser();
-    if (user) {
-      this.cartApiService.getUserCart(Number(user.id!)).subscribe({
-        next: (serverItems) => {
-          const itemToRemove = serverItems.find(item => item.productId === productId);
-          if (itemToRemove) {
-            this.cartApiService.removeFromCart(itemToRemove.id!).subscribe({
-              next: () => console.log('Item removed from server cart'),
-              error: (error) => console.error('Failed to remove from server cart:', error)
-            });
-          }
-        },
-        error: (error) => console.error('Failed to get server cart for removal:', error)
-      });
-    }
-  }
+    const pid = String(productId);
+    const items = this._cartItems().map(i =>
+      String(i.product.id) === pid ? { ...i, quantity } : i
+    );
+    this._cartItems.set(items);
 
-  updateQuantity(productId: number, quantity: number): void {
-    if (quantity <= 0) {
-      this.removeFromCart(productId);
-      return;
-    }
-
-    const currentItems = this.cartItems();
-    const itemIndex = currentItems.findIndex(item => item.product.id === productId);
-    
-    if (itemIndex > -1) {
-      const updatedItems = [...currentItems];
-      updatedItems[itemIndex].quantity = quantity;
-      this._cartItems.set(updatedItems);
-      
-      // Sync with server
-      const user = this.authService.currentUser();
-      if (user) {
-        this.cartApiService.getUserCart(Number(user.id!)).subscribe({
-          next: (serverItems) => {
-            const serverItem = serverItems.find(item => item.productId === productId);
-            if (serverItem) {
-              this.cartApiService.updateCartItem(serverItem.id!, quantity).subscribe({
-                next: (updated) => console.log('Server cart quantity updated:', updated),
-                error: (error) => console.error('Failed to update server cart quantity:', error)
-              });
-            }
-          },
-          error: (error) => console.error('Failed to get server cart for quantity update:', error)
-        });
-      }
-    }
+    if (this.authService.currentUser()) this.saveServerCart();
+    else if (isPlatformBrowser(this.platformId)) localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
   }
 
   clearCart(): void {
     this._cartItems.set([]);
-    
-    const user = this.authService.currentUser();
-    if (user) {
-      // Clear server cart
-      this.cartApiService.getUserCart(Number(user.id!)).subscribe({
-        next: (serverItems) => {
-          const deleteRequests = serverItems.map(item => 
-            this.cartApiService.removeFromCart(item.id!)
-          );
-          
-          if (deleteRequests.length > 0) {
-            forkJoin(deleteRequests).subscribe({
-              next: () => console.log('Server cart cleared'),
-              error: (error) => console.error('Failed to clear server cart:', error)
-            });
-          }
-        },
-        error: (error) => console.error('Failed to get server cart for clearing:', error)
-      });
-    } else {
-      // Clear local storage
-      if (isPlatformBrowser(this.platformId)) {
-        localStorage.removeItem(this.STORAGE_KEY);
-      }
-    }
+    if (this.authService.currentUser()) this.saveServerCart(); // saves empty array
+    else if (isPlatformBrowser(this.platformId)) localStorage.removeItem(this.STORAGE_KEY);
   }
 
-  // Method to manually clear local storage (for debugging)
   clearLocalStorage(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(this.STORAGE_KEY);
-      console.log('Local cart storage cleared');
-    }
+    if (isPlatformBrowser(this.platformId)) localStorage.removeItem(this.STORAGE_KEY);
   }
 }

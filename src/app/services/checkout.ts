@@ -1,6 +1,6 @@
 import { Injectable, inject, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 import { ShippingAddress, PaymentMethod, CheckoutSummary, CheckoutData } from '../models/checkout';
 import { CartService } from './cart';
 import { AuthService } from './auth.service';
@@ -82,16 +82,15 @@ export class CheckoutService {
   }
 
   getUserAddresses(): Observable<ShippingAddress[]> {
-    const user = this.authService.currentUser();
-    if (!user) return new Observable(observer => observer.next([]));
-    
-    return this.http.get<ShippingAddress[]>(`${this.apiUrl}/addresses?userId=${user.id}`);
+    const id = this.authService.currentUser()?.id;
+    if (!id) return of([]);
+    return this.http.get<ShippingAddress[]>(`${this.apiUrl}/addresses?userId=${id.toString()}`);
   }
 
-  saveAddress(address: ShippingAddress): Observable<ShippingAddress> {
-    const user = this.authService.currentUser();
-    const addressWithUser = { ...address, userId: user?.id };
-    return this.http.post<ShippingAddress>(`${this.apiUrl}/addresses`, addressWithUser);
+  getUserPaymentMethods(): Observable<PaymentMethod[]> {
+    const id = this.authService.currentUser()?.id;
+    if (!id) return of([]);
+    return this.http.get<PaymentMethod[]>(`${this.apiUrl}/payment-methods?userId=${id.toString()}`);
   }
 
   // Payment management
@@ -99,11 +98,10 @@ export class CheckoutService {
     this._paymentMethod.set(payment);
   }
 
-  getUserPaymentMethods(): Observable<PaymentMethod[]> {
+  saveAddress(address: ShippingAddress): Observable<ShippingAddress> {
     const user = this.authService.currentUser();
-    if (!user) return new Observable(observer => observer.next([]));
-    
-    return this.http.get<PaymentMethod[]>(`${this.apiUrl}/payment-methods?userId=${user.id}`);
+    const addressWithUser = { ...address, userId: user?.id };
+    return this.http.post<ShippingAddress>(`${this.apiUrl}/addresses`, addressWithUser);
   }
 
   savePaymentMethod(payment: PaymentMethod): Observable<PaymentMethod> {
@@ -115,43 +113,44 @@ export class CheckoutService {
   // Order processing
   processOrder(): Observable<Order> {
     this._isProcessing.set(true);
-    
-    const user = this.authService.currentUser();
+
+    const userId = this.authService.currentUser()?.id?.toString() ?? '';
     const cartItems = this.cartService.cartItems();
     const summary = this.checkoutSummary();
     const shippingAddr = this._shippingAddress();
     const payment = this._paymentMethod();
 
-    if (!user || !shippingAddr || !payment || cartItems.length === 0) {
+    if (!userId || !shippingAddr || !payment || cartItems.length === 0) {
       this._isProcessing.set(false);
       throw new Error('Missing required checkout information');
     }
 
-    const orderItems: OrderItem[] = cartItems.map(item => ({
-      productId: item.product.id,
-      productName: item.product.name,
-      quantity: item.quantity,
-      price: item.product.price,
-      imageUrl: item.product.imageUrl
+    const orderItems: OrderItem[] = cartItems.map(i => ({
+      productId: i.product.id,
+      productName: i.product.name,
+      quantity: i.quantity,
+      price: i.product.price,
+      imageUrl: i.product.imageUrl
     }));
 
-    const newOrder: Omit<Order, 'id'> = {
-      userId: Number(user.id),
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+
+    const newOrder: Order = {
+      userId,
       items: orderItems,
-      total: summary.total,
-      subtotal: summary.subtotal,
-      shipping: summary.shipping,
-      tax: summary.tax,
+      subtotal: r2(summary.subtotal),
+      shipping: r2(summary.shipping),
+      tax: r2(summary.tax),
+      total: r2(summary.total),
       status: 'pending',
       orderDate: new Date().toISOString(),
-      shippingAddress: `${shippingAddr.address}, ${shippingAddr.city}, ${shippingAddr.state} ${shippingAddr.zipCode}`,
+      shippingAddress: `${shippingAddr.address}, ${shippingAddr.city}, ${shippingAddr.country} ${shippingAddr.zipCode}`,
       paymentMethod: payment.type,
       trackingNumber: this.generateTrackingNumber()
     };
 
     return this.http.post<Order>(`${this.apiUrl}/orders`, newOrder).pipe(
       map(order => {
-        // Clear cart after successful order
         this.cartService.clearCart();
         this._isProcessing.set(false);
         this.resetCheckout();
@@ -161,7 +160,7 @@ export class CheckoutService {
   }
 
   private generateTrackingNumber(): string {
-    return 'TN' + Date.now().toString().slice(-8) + Math.random().toString(36).substr(2, 4).toUpperCase();
+    return 'TN' + Date.now().toString().slice(-8) + Math.random().toString(36).slice(2, 6).toUpperCase();
   }
 
   private resetCheckout(): void {

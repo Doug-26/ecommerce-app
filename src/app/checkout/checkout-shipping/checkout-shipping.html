@@ -1,39 +1,50 @@
 <div class="shipping-container">
   <h4 class="mb-4">Shipping Information</h4>
 
-  <!-- Saved Addresses -->
+  <!-- Saved Addresses Section -->
   @if (savedAddresses.length > 0 && !showNewAddressForm) {
     <div class="mb-4">
       <h6>Choose from saved addresses:</h6>
       @for (address of savedAddresses; track address.id) {
-        <div class="card mb-2">
+        <div class="card mb-3">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <strong>{{ address.firstName }} {{ address.lastName }}</strong><br>
-                {{ address.address }}<br>
-                {{ address.city }}, {{ address.state }} {{ address.zipCode }}<br>
-                {{ address.country }}
-                @if (address.phone) {
-                  <br>{{ address.phone }}
-                }
+            <div class="row">
+              <div class="col-md-8">
+                <h6 class="card-title">{{ address.firstName }} {{ address.lastName }}</h6>
+                <p class="card-text mb-0">
+                  {{ address.address }}<br>
+                  {{ address.city }}, {{ address.state }} {{ address.zipCode }}<br>
+                  {{ address.country }}
+                  @if (address.phone) {
+                    <br>{{ address.phone }}
+                  }
+                </p>
               </div>
-              <button class="btn btn-outline-primary btn-sm" (click)="selectSavedAddress(address)">
-                Use This Address
-              </button>
+              <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <button class="btn btn-primary" (click)="selectSavedAddress(address)">
+                  Use This Address
+                </button>
+              </div>
             </div>
           </div>
         </div>
       }
-      <button class="btn btn-link p-0" (click)="showNewAddressForm = true">
-        + Add new address
+      
+      <button type="button" class="btn btn-outline-secondary" (click)="showNewAddressForm = true">
+        <i class="fas fa-plus me-2"></i>Add New Address
       </button>
     </div>
-  }
-
-  <!-- New Address Form -->
-  @if (savedAddresses.length === 0 || showNewAddressForm) {
+  } @else {
+    <!-- New Address Form -->
     <form [formGroup]="shippingForm" (ngSubmit)="onSubmit()">
+      @if (savedAddresses.length > 0) {
+        <div class="mb-3">
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="showNewAddressForm = false">
+            <i class="fas fa-arrow-left me-2"></i>Back to Saved Addresses
+          </button>
+        </div>
+      }
+
       <div class="row mb-3">
         <div class="col-md-6">
           <label for="firstName" class="form-label">First Name *</label>
@@ -56,7 +67,6 @@
       <div class="mb-3">
         <label for="address" class="form-label">Street Address *</label>
         <input type="text" class="form-control" id="address" formControlName="address"
-               placeholder="123 Main St, Apt 4B"
                [class.is-invalid]="isFieldInvalid('address')">
         @if (isFieldInvalid('address')) {
           <div class="invalid-feedback">{{ getFieldError('address') }}</div>
@@ -64,7 +74,7 @@
       </div>
 
       <div class="row mb-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label for="city" class="form-label">City *</label>
           <input type="text" class="form-control" id="city" formControlName="city"
                  [class.is-invalid]="isFieldInvalid('city')">
@@ -72,19 +82,17 @@
             <div class="invalid-feedback">{{ getFieldError('city') }}</div>
           }
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label for="state" class="form-label">State *</label>
           <input type="text" class="form-control" id="state" formControlName="state"
-                 placeholder="CA"
                  [class.is-invalid]="isFieldInvalid('state')">
           @if (isFieldInvalid('state')) {
             <div class="invalid-feedback">{{ getFieldError('state') }}</div>
           }
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label for="zipCode" class="form-label">ZIP Code *</label>
           <input type="text" class="form-control" id="zipCode" formControlName="zipCode"
-                 placeholder="12345"
                  [class.is-invalid]="isFieldInvalid('zipCode')">
           @if (isFieldInvalid('zipCode')) {
             <div class="invalid-feedback">{{ getFieldError('zipCode') }}</div>
@@ -92,18 +100,21 @@
         </div>
       </div>
 
-      <!-- Update the country select field -->
       <div class="row mb-3">
         <div class="col-md-6">
           <label for="country" class="form-label">Country *</label>
           <select class="form-select" id="country" formControlName="country" 
-                  (change)="onCountryChange($any($event.target).value)">
+                  (change)="onCountryChange($any($event.target).value)"
+                  [class.is-invalid]="isFieldInvalid('country')">
             <option value="Philippines">Philippines</option>
             <option value="United States">United States</option>
             <option value="Canada">Canada</option>
             <option value="Australia">Australia</option>
             <option value="United Kingdom">United Kingdom</option>
           </select>
+          @if (isFieldInvalid('country')) {
+            <div class="invalid-feedback">{{ getFieldError('country') }}</div>
+          }
         </div>
         <div class="col-md-6">
           <label for="phone" class="form-label">Phone Number</label>
@@ -115,12 +126,6 @@
           }
         </div>
       </div>
-
-      @if (showNewAddressForm && savedAddresses.length > 0) {
-        <button type="button" class="btn btn-link p-0 mb-3" (click)="showNewAddressForm = false">
-          ← Back to saved addresses
-        </button>
-      }
 
       <div class="d-flex justify-content-between">
         <button type="button" class="btn btn-outline-secondary" (click)="onBack.emit()">

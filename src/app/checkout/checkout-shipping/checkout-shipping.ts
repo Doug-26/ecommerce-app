@@ -32,29 +32,73 @@ export class CheckoutShippingComponent implements OnInit {
       address: ['', [Validators.required, Validators.minLength(5)]],
       city: ['', [Validators.required, Validators.minLength(2)]],
       state: ['', [Validators.required, Validators.minLength(2)]],
-      // Updated ZIP code pattern to support international formats
       zipCode: ['', [Validators.required, Validators.pattern(/^[0-9]{4,10}$/)]],
-      country: ['United States', Validators.required],
-      // Updated phone pattern to support international formats
+      country: ['Philippines', Validators.required], // Changed default to Philippines
       phone: ['', [Validators.pattern(/^[\+]?[0-9\s\-\(\)]{7,15}$/)]]
     });
   }
 
   ngOnInit(): void {
     this.loadSavedAddresses();
-    this.prefillUserData();
+    
+    // Check if we have existing shipping address
+    const existingAddress = this.checkoutService.shippingAddress();
+    if (existingAddress) {
+      this.shippingForm.patchValue(existingAddress);
+      this.showNewAddressForm = true;
+    } else {
+      this.prefillUserData();
+    }
   }
 
-  // Update the prefill method to set Philippines as default for Philippine addresses
+  private loadSavedAddresses(): void {
+    this.checkoutService.getUserAddresses().subscribe({
+      next: (addresses) => {
+        this.savedAddresses = addresses;
+        // If no saved addresses, show the form immediately
+        if (addresses.length === 0) {
+          this.showNewAddressForm = true;
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load addresses:', error);
+        this.showNewAddressForm = true; // Show form on error
+      }
+    });
+  }
+
+  selectSavedAddress(address: ShippingAddress): void {
+    console.log('Selecting address:', address); // Debug log
+    
+    // Patch the form with the selected address
+    this.shippingForm.patchValue({
+      firstName: address.firstName,
+      lastName: address.lastName,
+      address: address.address,
+      city: address.city,
+      state: address.state,
+      zipCode: address.zipCode,
+      country: address.country,
+      phone: address.phone || ''
+    });
+
+    // Update country-specific validation
+    this.onCountryChange(address.country);
+
+    // Set the shipping address in the service
+    this.checkoutService.setShippingAddress(address);
+
+    // Continue to next step immediately
+    this.onContinue.emit();
+  }
+
   private prefillUserData(): void {
     const user = this.authService.currentUser();
     if (user) {
-      // Extract name parts
       const nameParts = user.name?.split(' ') || [];
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
-      // Check if user address suggests Philippines
       const isPhilippineAddress = user.address?.toLowerCase().includes('philippines') || 
                                  user.address?.toLowerCase().includes('ph');
 
@@ -63,46 +107,31 @@ export class CheckoutShippingComponent implements OnInit {
         lastName,
         phone: user.phone || '',
         address: user.address || '',
-        country: isPhilippineAddress ? 'Philippines' : 'United States'
+        country: isPhilippineAddress ? 'Philippines' : 'Philippines' // Default to Philippines
       });
+
+      // Update validation based on detected country
+      this.onCountryChange(isPhilippineAddress ? 'Philippines' : 'Philippines');
     }
   }
 
-  // Add method to update validation based on country
   onCountryChange(country: string): void {
     const zipControl = this.shippingForm.get('zipCode');
     const phoneControl = this.shippingForm.get('phone');
 
     if (country === 'Philippines') {
-      // Philippine ZIP codes are 4 digits
       zipControl?.setValidators([Validators.required, Validators.pattern(/^[0-9]{4}$/)]);
-      // Philippine phone numbers (various formats)
       phoneControl?.setValidators([Validators.pattern(/^(\+63|63|0)?[0-9]{10}$/)]);
     } else if (country === 'United States') {
-      // US ZIP codes
       zipControl?.setValidators([Validators.required, Validators.pattern(/^\d{5}(-\d{4})?$/)]);
-      // US phone numbers
       phoneControl?.setValidators([Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)]);
     } else {
-      // International formats
       zipControl?.setValidators([Validators.required, Validators.pattern(/^[0-9A-Za-z\s\-]{3,10}$/)]);
       phoneControl?.setValidators([Validators.pattern(/^[\+]?[0-9\s\-\(\)]{7,15}$/)]);
     }
 
     zipControl?.updateValueAndValidity();
     phoneControl?.updateValueAndValidity();
-  }
-
-  private loadSavedAddresses(): void {
-    this.checkoutService.getUserAddresses().subscribe({
-      next: (addresses) => this.savedAddresses = addresses,
-      error: (error) => console.error('Failed to load addresses:', error)
-    });
-  }
-
-  selectSavedAddress(address: ShippingAddress): void {
-    this.shippingForm.patchValue(address);
-    this.showNewAddressForm = false;
   }
 
   onSubmit(): void {
@@ -170,7 +199,6 @@ export class CheckoutShippingComponent implements OnInit {
     return fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1');
   }
 
-  // Add this method to your component:
   getPhonePlaceholder(): string {
     const country = this.shippingForm.get('country')?.value;
     switch (country) {

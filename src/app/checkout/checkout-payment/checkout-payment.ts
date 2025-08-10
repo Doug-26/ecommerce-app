@@ -67,11 +67,14 @@ export class CheckoutPaymentComponent implements OnInit {
   }
 
   selectSavedPayment(payment: PaymentMethod): void {
+    const expiryMonth = typeof payment.expiryMonth === 'string' ? parseInt(payment.expiryMonth, 10) : payment.expiryMonth;
+    const expiryYear = typeof payment.expiryYear === 'string' ? parseInt(payment.expiryYear, 10) : payment.expiryYear;
+
     this.paymentForm.patchValue({
       type: payment.type,
       cardNumber: payment.cardNumber,
-      expiryMonth: payment.expiryMonth,
-      expiryYear: payment.expiryYear,
+      expiryMonth,
+      expiryYear,
       cardholderName: payment.cardholderName
     });
     this.selectedPaymentType = payment.type;

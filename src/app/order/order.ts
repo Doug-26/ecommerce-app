@@ -10,7 +10,7 @@ import { OrderService } from '../services/order';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './order.html',
-  styleUrls: ['./order.scss']
+  styleUrl: './order.scss' // was styleUrls
 })
 export class OrdersComponent implements OnInit {
   private authService = inject(AuthService);
@@ -25,7 +25,7 @@ export class OrdersComponent implements OnInit {
   }
 
   loadOrders(): void {
-    const user = this.authService.currentUser(); // Use currentUser() signal
+    const user = this.authService.currentUser();
     if (!user?.id) {
       this.error.set('User not logged in');
       return;
@@ -33,8 +33,9 @@ export class OrdersComponent implements OnInit {
 
     this.loading.set(true);
     this.error.set('');
-    
-    this.orderService.getUserOrders(Number(user.id)).subscribe({
+
+    // Pass string userId to service
+    this.orderService.getUserOrders(user.id.toString()).subscribe({
       next: (orders) => {
         this.orders.set(orders);
         this.loading.set(false);
@@ -48,32 +49,30 @@ export class OrdersComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    const statusClasses = {
-      'pending': 'bg-warning text-dark',
-      'confirmed': 'bg-info text-white',
-      'shipped': 'bg-primary text-white',
-      'delivered': 'bg-success text-white',
-      'cancelled': 'bg-danger text-white'
+    const statusClasses: Record<string, string> = {
+      pending: 'bg-warning text-dark',
+      paid: 'bg-info text-white',
+      fulfilled: 'bg-primary text-white',
+      shipped: 'bg-primary text-white',
+      delivered: 'bg-success text-white',
+      cancelled: 'bg-danger text-white',
+      confirmed: 'bg-info text-white'
     };
-    return statusClasses[status as keyof typeof statusClasses] || 'bg-secondary text-white';
+    return statusClasses[status] ?? 'bg-secondary text-white';
   }
 
-  viewOrderDetails(orderId: number): void {
-    // Navigate to order details page
+  viewOrderDetails(orderId: string): void {
     console.log('View order details:', orderId);
   }
 
   reorderItems(order: Order): void {
-    // Add order items back to cart
     console.log('Reorder items:', order);
   }
 
-  cancelOrder(orderId: number): void {
+  cancelOrder(orderId: string): void {
     if (confirm('Are you sure you want to cancel this order?')) {
       this.orderService.cancelOrder(orderId).subscribe({
-        next: () => {
-          this.loadOrders(); // Refresh orders
-        },
+        next: () => this.loadOrders(),
         error: (error) => {
           console.error('Failed to cancel order:', error);
           alert('Failed to cancel order. Please try again.');

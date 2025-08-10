@@ -1,15 +1,13 @@
-import { Product } from "./products";
+// Define both client-side and server-side cart item shapes
+import { Product } from './products';
 
 export interface CartItem {
   product: Product;
   quantity: number;
-  userId?: number;
 }
 
+// Items stored in JSON Server (inside a user's cart document)
 export interface ServerCartItem {
-  id?: string | number; // Allow both string and number IDs
-  userId: number;
-  productId: number;
+  productId: string;
   quantity: number;
-  product?: Product;
 }

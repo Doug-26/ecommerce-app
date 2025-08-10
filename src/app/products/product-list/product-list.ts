@@ -22,6 +22,7 @@ export class ProductListComponent implements OnInit {
   products = signal<Product[]>([]);
   loading = signal(true);
   error = signal('');
+  fallbackImg = 'https://via.placeholder.com/600x400?text=No+Image';
 
   ngOnInit(): void {
     this.loadProducts();
@@ -54,5 +55,13 @@ export class ProductListComponent implements OnInit {
 
     this.cartService.addToCart(product);
     console.log(`Added ${product.name} to cart`);
+  }
+
+  onImgError(e: Event): void {
+    const img = e.target as HTMLImageElement | null;
+    if (img) {
+      img.onerror = null; // prevent infinite loop if fallback fails
+      img.src = this.fallbackImg;
+    }
   }
 }

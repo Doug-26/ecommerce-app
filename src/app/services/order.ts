@@ -1,32 +1,54 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { environment } from '../app.config';
 import { Order } from '../models/order';
+import { AuthService } from './auth.service'; // <-- add
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000';
+  private api = environment.apiUrl;
+  private auth = inject(AuthService); // <-- add
 
-  getUserOrders(userId: number): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/orders?userId=${userId}&_sort=orderDate&_order=desc`);
+  getMyOrders(): Observable<Order[]> {
+    const uid = this.auth.currentUser()?.id?.toString() ?? '';
+    return this.http
+      .get<Order[]>(`${this.api}/orders?userId=${encodeURIComponent(uid)}`)
+      .pipe(
+        map(list =>
+          [...list].sort(
+            (a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+          )
+        )
+      );
   }
 
-  getOrderById(orderId: number): Observable<Order> {
-    return this.http.get<Order>(`${this.apiUrl}/orders/${orderId}`);
+  getUserOrders(userId: string): Observable<Order[]> {
+    return this.http
+      .get<Order[]>(`${this.api}/orders?userId=${encodeURIComponent(userId)}`)
+      .pipe(
+        map(list =>
+          [...list].sort(
+            (a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+          )
+        )
+      );
+  }
+
+  getById(id: string): Observable<Order> {
+    return this.http.get<Order>(`${this.api}/orders/${id}`);
   }
 
   createOrder(order: Omit<Order, 'id'>): Observable<Order> {
-    return this.http.post<Order>(`${this.apiUrl}/orders`, order);
+    return this.http.post<Order>(`${this.api}/orders`, order);
   }
 
-  updateOrderStatus(orderId: number, status: Order['status']): Observable<Order> {
-    return this.http.patch<Order>(`${this.apiUrl}/orders/${orderId}`, { status });
+  updateOrderStatus(orderId: string, status: Order['status']): Observable<Order> { // <-- string
+    return this.http.patch<Order>(`${this.api}/orders/${orderId}`, { status });
   }
 
-  cancelOrder(orderId: number): Observable<Order> {
-    return this.updateOrderStatus(orderId, 'cancelled');
+  cancelOrder(orderId: string): Observable<Order> {
+    return this.http.patch<Order>(`${this.api}/orders/${orderId}`, { status: 'cancelled' });
   }
 }
