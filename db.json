@@ -47,11 +47,25 @@
     }
   ],
   "cart": [
-    { "id": "u1", "userId": "1", "items": [] }
+    {
+      "id": "u1",
+      "userId": "1",
+      "items": []
+    },
+    {
+      "id": "9dd6",
+      "userId": "5c3e",
+      "items": [
+        {
+          "productId": "1",
+          "quantity": 1
+        }
+      ]
+    }
   ],
   "orders": [
     {
-      "id": "3ab6",
+      "id": "fd1f",
       "userId": "1",
       "items": [
         {
@@ -60,32 +74,25 @@
           "quantity": 1,
           "price": 129.99,
           "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop&crop=center"
-        },
-        {
-          "productId": "2",
-          "productName": "Smart Watch",
-          "quantity": 1,
-          "price": 89.99,
-          "imageUrl": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=200&fit=crop&crop=center"
         }
       ],
-      "total": 238.67830000000004,
-      "subtotal": 219.98000000000002,
+      "subtotal": 129.99,
       "shipping": 0,
-      "tax": 18.698300000000003,
+      "tax": 11.05,
+      "total": 141.04,
       "status": "pending",
-      "orderDate": "2025-08-10T13:12:30.660Z",
-      "shippingAddress": "B14 L10, Naga City, Philippines 4400",
+      "orderDate": "2025-08-13T16:06:07.733Z",
+      "shippingAddress": "B14 L10 Green Valley Barangay Pacol, Naga City, Philippines 4400",
       "paymentMethod": "credit_card",
-      "trackingNumber": "TN315506619S8P"
+      "trackingNumber": "TN01167733A3CA"
     }
   ],
   "addresses": [
     {
-      "id": "30f1",
-      "firstName": "Christian",
-      "lastName": " De La Cruz",
-      "address": "B14 L10",
+      "id": "2953",
+      "firstName": "Christian Jay",
+      "lastName": "De La Cruz",
+      "address": "B14 L10 Green Valley Barangay Pacol",
       "city": "Naga City",
       "state": "Philippines",
       "zipCode": "4400",
@@ -94,27 +101,41 @@
       "userId": "1"
     },
     {
-      "id": "30c3",
-      "firstName": "Christian",
-      "lastName": " De La Cruz",
-      "address": "B14 L10",
-      "city": "Naga City",
-      "state": "Philippines",
+      "id": "d32a",
+      "firstName": "Test ",
+      "lastName": "User",
+      "address": "Test Street",
+      "city": "Test ",
+      "state": "Test ",
       "zipCode": "4400",
       "country": "Philippines",
-      "phone": "09516909596",
+      "phone": "09122435355",
       "userId": "1"
     }
   ],
   "payment-methods": [
     {
-      "id": "e363",
+      "id": "cb02",
       "type": "credit_card",
-      "cardNumber": "1234678910111223",
-      "expiryMonth": "12",
-      "expiryYear": "2034",
-      "cvv": "123",
-      "cardholderName": "Christian Jay Dela Cruz",
+      "cardholderName": "testUserName",
+      "cardNumber": "123345667889",
+      "expiryMonth": 1,
+      "expiryYear": 2030,
+      "brand": "MasterCard",
+      "last4": "7889",
+      "email": "",
+      "userId": "1"
+    },
+    {
+      "id": "221d",
+      "type": "paypal",
+      "cardholderName": "",
+      "cardNumber": "",
+      "expiryMonth": "",
+      "expiryYear": "",
+      "brand": "",
+      "last4": "",
+      "email": "test@email.com",
       "userId": "1"
     }
   ]

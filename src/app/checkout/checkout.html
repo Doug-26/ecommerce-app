@@ -1,68 +1,98 @@
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-12">
-      <!-- Progress Steps -->
-      <div class="checkout-progress mb-5">
+<div class="checkout-container">
+  <div class="container py-4">
+    
+    <!-- Step Progress Indicator -->
+    <div class="row justify-content-center mb-5">
+      <div class="col-md-10">
         <div class="d-flex justify-content-between align-items-center">
-          <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
-            <div class="step-number" (click)="goToStep(1)">
+          
+          <!-- Step 1: Shipping -->
+          <div class="text-center" [class]="currentStep() === 1 ? 'text-primary' : currentStep() > 1 ? 'text-success' : 'text-muted'">
+            <div class="step-circle mb-2" 
+                 [class]="currentStep() === 1 ? 'bg-primary text-white' : currentStep() > 1 ? 'bg-success text-white' : 'bg-light text-muted'">
               @if (currentStep() > 1) {
-                <i class="fas fa-check"></i>
+                ✓
               } @else {
                 1
               }
             </div>
-            <div class="step-label">Shipping</div>
+            <small>Shipping</small>
           </div>
-          <div class="step-line" [class.completed]="currentStep() > 1"></div>
-          
-          <div class="step" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
-            <div class="step-number" (click)="goToStep(2)">
+
+          <!-- Line -->
+          <div class="flex-fill mx-3" style="height: 2px;" 
+               [class]="currentStep() > 1 ? 'bg-success' : 'bg-light'"></div>
+
+          <!-- Step 2: Payment -->
+          <div class="text-center" [class]="currentStep() === 2 ? 'text-primary' : currentStep() > 2 ? 'text-success' : 'text-muted'">
+            <div class="step-circle mb-2"
+                 [class]="currentStep() === 2 ? 'bg-primary text-white' : currentStep() > 2 ? 'bg-success text-white' : 'bg-light text-muted'">
               @if (currentStep() > 2) {
-                <i class="fas fa-check"></i>
+                ✓
               } @else {
                 2
               }
             </div>
-            <div class="step-label">Payment</div>
+            <small>Payment</small>
           </div>
-          <div class="step-line" [class.completed]="currentStep() > 2"></div>
-          
-          <div class="step" [class.active]="currentStep() >= 3" [class.completed]="currentStep() > 3">
-            <div class="step-number" (click)="goToStep(3)">
+
+          <!-- Line -->
+          <div class="flex-fill mx-3" style="height: 2px;"
+               [class]="currentStep() > 2 ? 'bg-success' : 'bg-light'"></div>
+
+          <!-- Step 3: Review -->
+          <div class="text-center" [class]="currentStep() === 3 ? 'text-primary' : currentStep() > 3 ? 'text-success' : 'text-muted'">
+            <div class="step-circle mb-2"
+                 [class]="currentStep() === 3 ? 'bg-primary text-white' : currentStep() > 3 ? 'bg-success text-white' : 'bg-light text-muted'">
               @if (currentStep() > 3) {
-                <i class="fas fa-check"></i>
+                ✓
               } @else {
                 3
               }
             </div>
-            <div class="step-label">Review</div>
+            <small>Review</small>
           </div>
+
         </div>
       </div>
+    </div>
 
-      <!-- Step Content -->
-      <div class="checkout-content">
+    <!-- Step Content -->
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        
         @switch (currentStep()) {
           @case (1) {
             <app-checkout-shipping 
-              (onContinue)="onContinueToPayment()"
-              (onBack)="onBackToShipping()">
+              (onContinue)="onShippingComplete()"
+              (back)="onShippingBack()">
             </app-checkout-shipping>
           }
           @case (2) {
             <app-checkout-payment 
-              (onContinue)="onContinueToReview()"
-              (onBack)="onBackToShipping()">
+              (continue)="onPaymentComplete()" 
+              (back)="onPaymentBack()">
             </app-checkout-payment>
           }
           @case (3) {
             <app-checkout-review 
-              (onBack)="onBackToPayment()">
+              (placeOrder)="onOrderComplete()" 
+              (back)="onReviewBack()">
             </app-checkout-review>
           }
+          @case (4) {
+            <app-checkout-success></app-checkout-success>
+          }
+          @default {
+            <div class="alert alert-warning">
+              Invalid step: {{ currentStep() }}
+              <button class="btn btn-link" (click)="checkoutService.goToStep(1)">Reset to Step 1</button>
+            </div>
+          }
         }
+
       </div>
     </div>
+
   </div>
 </div>

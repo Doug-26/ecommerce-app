@@ -1,141 +1,165 @@
-<div class="shipping-container">
+<div class="shipping-step">
   <h4 class="mb-4">Shipping Information</h4>
 
-  <!-- Saved Addresses Section -->
-  @if (savedAddresses.length > 0 && !showNewAddressForm) {
-    <div class="mb-4">
-      <h6>Choose from saved addresses:</h6>
-      @for (address of savedAddresses; track address.id) {
-        <div class="card mb-3">
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-8">
-                <h6 class="card-title">{{ address.firstName }} {{ address.lastName }}</h6>
-                <p class="card-text mb-0">
-                  {{ address.address }}<br>
-                  {{ address.city }}, {{ address.state }} {{ address.zipCode }}<br>
-                  {{ address.country }}
-                  @if (address.phone) {
-                    <br>{{ address.phone }}
-                  }
-                </p>
-              </div>
-              <div class="col-md-4 d-flex align-items-center justify-content-end">
-                <button class="btn btn-primary" (click)="selectSavedAddress(address)">
-                  Use This Address
-                </button>
-              </div>
-            </div>
+  <!-- Loading / Error -->
+  @if (loadingList()) {
+    <div class="d-flex align-items-center mb-3">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      <span>Loading addresses...</span>
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex justify-content-between align-items-center">
+      {{ loadError() }}
+      <button class="btn btn-sm btn-outline-light" (click)="fetchAddresses()">Retry</button>
+    </div>
+  }
+
+  @if (!showForm()) {
+    @if (justSavedAddress()) {
+      <!-- Success message after saving address -->
+      <div class="alert alert-success mb-4">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-check-circle me-2"></i>
+          <div class="flex-grow-1">
+            <strong>Address saved successfully!</strong>
+            <p class="mb-0 mt-1">Your address has been saved and selected for shipping.</p>
           </div>
         </div>
-      }
+      </div>
       
-      <button type="button" class="btn btn-outline-secondary" (click)="showNewAddressForm = true">
-        <i class="fas fa-plus me-2"></i>Add New Address
-      </button>
-    </div>
-  } @else {
-    <!-- New Address Form -->
-    <form [formGroup]="shippingForm" (ngSubmit)="onSubmit()">
-      @if (savedAddresses.length > 0) {
-        <div class="mb-3">
-          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="showNewAddressForm = false">
-            <i class="fas fa-arrow-left me-2"></i>Back to Saved Addresses
-          </button>
-        </div>
-      }
-
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label for="firstName" class="form-label">First Name *</label>
-          <input type="text" class="form-control" id="firstName" formControlName="firstName"
-                 [class.is-invalid]="isFieldInvalid('firstName')">
-          @if (isFieldInvalid('firstName')) {
-            <div class="invalid-feedback">{{ getFieldError('firstName') }}</div>
-          }
-        </div>
-        <div class="col-md-6">
-          <label for="lastName" class="form-label">Last Name *</label>
-          <input type="text" class="form-control" id="lastName" formControlName="lastName"
-                 [class.is-invalid]="isFieldInvalid('lastName')">
-          @if (isFieldInvalid('lastName')) {
-            <div class="invalid-feedback">{{ getFieldError('lastName') }}</div>
-          }
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label for="address" class="form-label">Street Address *</label>
-        <input type="text" class="form-control" id="address" formControlName="address"
-               [class.is-invalid]="isFieldInvalid('address')">
-        @if (isFieldInvalid('address')) {
-          <div class="invalid-feedback">{{ getFieldError('address') }}</div>
-        }
-      </div>
-
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <label for="city" class="form-label">City *</label>
-          <input type="text" class="form-control" id="city" formControlName="city"
-                 [class.is-invalid]="isFieldInvalid('city')">
-          @if (isFieldInvalid('city')) {
-            <div class="invalid-feedback">{{ getFieldError('city') }}</div>
-          }
-        </div>
-        <div class="col-md-4">
-          <label for="state" class="form-label">State *</label>
-          <input type="text" class="form-control" id="state" formControlName="state"
-                 [class.is-invalid]="isFieldInvalid('state')">
-          @if (isFieldInvalid('state')) {
-            <div class="invalid-feedback">{{ getFieldError('state') }}</div>
-          }
-        </div>
-        <div class="col-md-4">
-          <label for="zipCode" class="form-label">ZIP Code *</label>
-          <input type="text" class="form-control" id="zipCode" formControlName="zipCode"
-                 [class.is-invalid]="isFieldInvalid('zipCode')">
-          @if (isFieldInvalid('zipCode')) {
-            <div class="invalid-feedback">{{ getFieldError('zipCode') }}</div>
-          }
-        </div>
-      </div>
-
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label for="country" class="form-label">Country *</label>
-          <select class="form-select" id="country" formControlName="country" 
-                  (change)="onCountryChange($any($event.target).value)"
-                  [class.is-invalid]="isFieldInvalid('country')">
-            <option value="Philippines">Philippines</option>
-            <option value="United States">United States</option>
-            <option value="Canada">Canada</option>
-            <option value="Australia">Australia</option>
-            <option value="United Kingdom">United Kingdom</option>
-          </select>
-          @if (isFieldInvalid('country')) {
-            <div class="invalid-feedback">{{ getFieldError('country') }}</div>
-          }
-        </div>
-        <div class="col-md-6">
-          <label for="phone" class="form-label">Phone Number</label>
-          <input type="tel" class="form-control" id="phone" formControlName="phone"
-                 [placeholder]="getPhonePlaceholder()"
-                 [class.is-invalid]="isFieldInvalid('phone')">
-          @if (isFieldInvalid('phone')) {
-            <div class="invalid-feedback">{{ getFieldError('phone') }}</div>
-          }
-        </div>
-      </div>
-
       <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary" (click)="onBack.emit()">
+        <button type="button" class="btn btn-outline-secondary" (click)="back.emit()">
           <i class="fas fa-arrow-left me-2"></i>Back to Cart
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
-          @if (isLoading) {
+        <button class="btn btn-success" (click)="onContinue.emit()">
+          <i class="fas fa-arrow-right me-2"></i>Continue to Payment
+        </button>
+      </div>
+    } @else {
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Saved Addresses</h6>
+        <button class="btn btn-sm btn-outline-primary" (click)="startAdd()">Add New</button>
+      </div>
+
+      @if (addresses().length) {
+        <div class="list-group mb-3">
+          @for (a of addresses(); track a.id) {
+            <div class="list-group-item p-3 selectable"
+                 [class.active]="selectedAddressId() === a.id">
+              <div class="d-flex">
+                <div class="form-check me-3">
+                  <input class="form-check-input"
+                         type="radio"
+                         name="addressSelect"
+                         [value]="a.id"
+                         [checked]="selectedAddressId() === a.id"
+                         (change)="selectAddress(a.id!)">
+                </div>
+                <div class="flex-grow-1">
+                  <strong>{{ a.firstName }} {{ a.lastName }}</strong><br>
+                  {{ a.address }}<br>
+                  {{ a.city }}, {{ a.state }} {{ a.zipCode }}<br>
+                  {{ a.country }}
+                  @if (a.phone) { <br><small>{{ a.phone }}</small> }
+                </div>
+                <div class="ms-3 d-flex flex-column gap-2">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="startEdit(a)">Edit</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="removeAddress(a)">Delete</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="d-flex justify-content-between mt-3">
+          <button type="button" class="btn btn-outline-secondary" (click)="back.emit()">
+            <i class="fas fa-arrow-left me-2"></i>Back to Cart
+          </button>
+          <button class="btn btn-primary"
+                  [disabled]="!selectedAddressId()"
+                  (click)="useSelectedAddress()">
+            Continue to Payment
+          </button>
+        </div>
+      } @else if (!loadingList() && !loadError()) {
+        <div class="alert alert-info mb-3">
+          No saved addresses yet. Click "Add New" to create one.
+        </div>
+        <div class="d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary" (click)="back.emit()">
+            <i class="fas fa-arrow-left me-2"></i>Back to Cart
+          </button>
+          <button class="btn btn-primary" (click)="startAdd()">Add New Address</button>
+        </div>
+      }
+    }
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submitForm()" novalidate>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">
+          {{ editingAddressId() ? 'Edit Address' : 'Add New Address' }}
+        </h6>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelForm()">
+          <i class="fas fa-arrow-left me-1"></i>Back
+        </button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">First Name *</label>
+          <input class="form-control" formControlName="firstName" [class.is-invalid]="invalid('firstName')">
+          @if (invalid('firstName')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Last Name *</label>
+          <input class="form-control" formControlName="lastName" [class.is-invalid]="invalid('lastName')">
+          @if (invalid('lastName')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-12">
+          <label class="form-label">Street Address *</label>
+          <input class="form-control" formControlName="address" [class.is-invalid]="invalid('address')">
+          @if (invalid('address')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">City *</label>
+          <input class="form-control" formControlName="city" [class.is-invalid]="invalid('city')">
+          @if (invalid('city')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">State/Province *</label>
+          <input class="form-control" formControlName="state" [class.is-invalid]="invalid('state')">
+          @if (invalid('state')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">ZIP *</label>
+          <input class="form-control" formControlName="zipCode" [class.is-invalid]="invalid('zipCode')">
+          @if (invalid('zipCode')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Country *</label>
+          <select class="form-select" formControlName="country" [class.is-invalid]="invalid('country')">
+            <option>Philippines</option>
+            <option>United States</option>
+            <option>Canada</option>
+            <option>Australia</option>
+            <option>United Kingdom</option>
+          </select>
+          @if (invalid('country')) { <div class="invalid-feedback">Required</div> }
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input class="form-control" formControlName="phone">
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end mt-4">
+        <button type="submit"
+                class="btn btn-success"
+                [disabled]="submitting()">
+          @if (submitting()) {
             <span class="spinner-border spinner-border-sm me-2"></span>
           }
-          Continue to Payment <i class="fas fa-arrow-right ms-2"></i>
+          {{ editingAddressId() ? 'Save Changes' : 'Save Address' }}
         </button>
       </div>
     </form>

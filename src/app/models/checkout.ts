@@ -1,5 +1,6 @@
 export interface ShippingAddress {
-  id?: number;
+  id?: string;
+  userId?: string;
   firstName: string;
   lastName: string;
   address: string;
@@ -11,14 +12,17 @@ export interface ShippingAddress {
 }
 
 export interface PaymentMethod {
-  id?: number;
-  type: 'credit_card' | 'debit_card' | 'paypal';
-  cardNumber?: string;
-  expiryMonth?: number;
-  expiryYear?: number;
-  cvv?: string;
+  id?: string;
+  userId?: string;
+  type: 'credit_card' | 'debit_card' | 'paypal' | string;
   cardholderName?: string;
-  isDefault?: boolean;
+  cardNumber?: string;
+  expiryMonth?: number | string;
+  expiryYear?: number | string;
+  provider?: string;
+  email?: string; // for PayPal etc.
+  last4?: string;
+  brand?: string;
 }
 
 export interface CheckoutSummary {

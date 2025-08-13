@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { Order } from '../../models/order';
+import { CheckoutService } from '../../services/checkout';
 
 @Component({
   selector: 'app-checkout-success',
@@ -10,19 +11,33 @@ import { Order } from '../../models/order';
   templateUrl: './checkout-success.html',
   styleUrl: './checkout-success.scss'
 })
-export class CheckoutSuccessComponent implements OnInit {
+export class CheckoutSuccessComponent implements OnInit, OnDestroy {
+  private router = inject(Router);
+  private checkoutService = inject(CheckoutService);
+  
   order: Order | null = null;
 
-  constructor(private router: Router) {
+  constructor() {
+    // Try to get order from router state first
     const navigation = this.router.getCurrentNavigation();
     this.order = navigation?.extras?.state?.['order'] || null;
   }
 
   ngOnInit(): void {
+    // If no order in router state, try to get from service
     if (!this.order) {
-      // Redirect to orders page if no order data
+      this.order = this.checkoutService.lastOrder();
+    }
+    
+    // If still no order, redirect to orders page
+    if (!this.order) {
       this.router.navigate(['/orders']);
     }
+  }
+
+  ngOnDestroy(): void {
+    // Reset checkout state when leaving the success page
+    this.checkoutService.resetCheckoutState();
   }
 
   printOrder(): void {

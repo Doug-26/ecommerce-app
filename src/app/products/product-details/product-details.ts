@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProductService } from '../../services/product';
 import { Product } from '../../models/products';
@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './product-details.html',
   styleUrl: './product-details.scss'
 })
-export class ProductDetailsComponent {
+export class ProductDetailsComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -24,12 +24,12 @@ export class ProductDetailsComponent {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  constructor() {
-    const id = Number(this.route.snapshot.paramMap.get('productId'));
-    console.log('Product ID from route:', id); // Debug log
-    
-    if (id && !isNaN(id)) {
-      this.getProductById(id);
+  constructor() {}
+
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('productId');
+    if (id) {
+      this.loadProduct(id);
     } else {
       this.error.set('Invalid product ID');
       this.loading.set(false);
@@ -46,25 +46,18 @@ export class ProductDetailsComponent {
     console.log(`Product added to cart: ${product.name}`);
   }
 
-  getProductById(id: number): void {
+  private loadProduct(id: string): void {
     this.loading.set(true);
-    this.error.set(null);
-    
-    console.log(`Fetching product with ID: ${id}`); // Debug log
-    
-    this.productService.getProductById(id).subscribe({
-      next: (product) => {
-        console.log('Product received:', product); // Debug log
-        if (product) {
-          this.product.set(product);
-        } else {
-          this.error.set(`Product with ID ${id} not found.`);
-        }
+    this.error.set('');
+
+    this.productService.getProduct(id).subscribe({
+      next: (product: Product) => {
+        this.product.set(product);
         this.loading.set(false);
       },
-      error: (error) => {
-        console.error('Error fetching product:', error);
-        this.error.set('Failed to load product details. Please try again.');
+      error: (err: unknown) => {
+        console.error('Failed to load product', err);
+        this.error.set('Product not found or failed to load.');
         this.loading.set(false);
       }
     });

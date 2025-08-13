@@ -51,11 +51,26 @@
     <div class="card-body">
       @if (paymentMethod()) {
         <p class="mb-0">
-          <strong>{{ paymentMethod()!.type | titlecase }}</strong>
-          @if (paymentMethod()!.cardNumber) {
-            <br>**** **** **** {{ paymentMethod()!.cardNumber?.slice(-4) }}
+          <strong>{{ getPaymentMethodLabel(paymentMethod()!.type) }}</strong>
+          @if (paymentMethod()!.type === 'credit_card' || paymentMethod()!.type === 'debit_card') {
+            @if (paymentMethod()!.cardholderName) {
+              <br>{{ paymentMethod()!.cardholderName }}
+            }
+            @if (paymentMethod()!.last4) {
+              <br>•••• •••• •••• {{ paymentMethod()!.last4 }}
+            }
+            @if (paymentMethod()!.brand) {
+              <br><small class="text-muted">{{ paymentMethod()!.brand }}</small>
+            }
+          }
+          @if (paymentMethod()!.type === 'paypal') {
+            @if (paymentMethod()!.email) {
+              <br>{{ paymentMethod()!.email }}
+            }
           }
         </p>
+      } @else {
+        <p class="text-muted mb-0">No payment method selected</p>
       }
     </div>
   </div>
@@ -94,11 +109,12 @@
 
   <!-- Action Buttons -->
   <div class="d-flex justify-content-between">
-    <button type="button" class="btn btn-outline-secondary" (click)="onBack.emit()">
+    <button type="button" class="btn btn-outline-secondary" (click)="back.emit()">
       <i class="fas fa-arrow-left me-2"></i>Back to Payment
     </button>
     <button type="button" class="btn btn-success btn-lg" 
-            (click)="placeOrder()" [disabled]="isProcessing()">
+            (click)="placeOrderAction()" 
+            [disabled]="isProcessing() || !canPlaceOrder()">
       @if (isProcessing()) {
         <span class="spinner-border spinner-border-sm me-2"></span>
         Processing Order...
@@ -107,4 +123,18 @@
       }
     </button>
   </div>
+
+  @if (!canPlaceOrder() && !isProcessing()) {
+    <div class="alert alert-warning mt-3">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      <strong>Cannot place order:</strong>
+      @if (cartItems().length === 0) {
+        Your cart is empty.
+      } @else if (!shippingAddress()) {
+        Please select a shipping address.
+      } @else if (!paymentMethod()) {
+        Please select a payment method.
+      }
+    </div>
+  }
 </div>

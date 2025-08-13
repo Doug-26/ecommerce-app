@@ -1,6 +1,6 @@
-import { Component, inject, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { CheckoutService } from '../../services/checkout';
 import { PaymentMethod } from '../../models/checkout';
 
@@ -12,142 +12,190 @@ import { PaymentMethod } from '../../models/checkout';
   styleUrl: './checkout-payment.scss'
 })
 export class CheckoutPaymentComponent implements OnInit {
-  @Output() onContinue = new EventEmitter<void>();
-  @Output() onBack = new EventEmitter<void>();
+  @Output() continue = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
 
+  private checkout = inject(CheckoutService);
   private fb = inject(FormBuilder);
-  private checkoutService = inject(CheckoutService);
 
-  paymentForm: FormGroup;
-  isLoading = false;
-  selectedPaymentType: 'credit_card' | 'debit_card' | 'paypal' = 'credit_card';
-  savedPaymentMethods: PaymentMethod[] = [];
+  methods = this.checkout.paymentMethods;
 
-  constructor() {
-    this.paymentForm = this.fb.group({
-      type: ['credit_card', Validators.required],
-      cardNumber: ['', [Validators.required, Validators.pattern(/^\d{16}$/)]],
-      expiryMonth: ['', [Validators.required, Validators.min(1), Validators.max(12)]],
-      expiryYear: ['', [Validators.required, Validators.min(2024)]],
-      cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
-      cardholderName: ['', [Validators.required, Validators.minLength(2)]]
-    });
-  }
+  showForm = signal(false);
+  editingPaymentId = signal<string | null>(null);
+  selectedPaymentId = signal<string | null>(null);
+  loadingList = signal(false);
+  submitting = signal(false);
+  attemptedSubmit = signal(false);
+  justSavedPayment = signal(false);
+
+  form: FormGroup = this.fb.group({
+    type: ['credit_card', Validators.required],
+    cardholderName: [''],
+    cardNumber: [''],
+    expiryMonth: [''],
+    expiryYear: [''],
+    brand: [''],
+    last4: [''],
+    email: ['']
+  });
+
+  private autoSelectEffect = effect(() => {
+    const list = this.methods();
+    if (list.length && !this.selectedPaymentId()) {
+      this.selectedPaymentId.set(list[0].id || null);
+    }
+  });
 
   ngOnInit(): void {
-    this.loadSavedPaymentMethods();
+    this.loadMethods();
+    this.onTypeChange(); // initialize validators
   }
 
-  private loadSavedPaymentMethods(): void {
-    this.checkoutService.getUserPaymentMethods().subscribe({
-      next: (methods) => this.savedPaymentMethods = methods,
-      error: (error) => console.error('Failed to load payment methods:', error)
+  loadMethods(): void {
+    this.loadingList.set(true);
+    this.checkout.refreshPaymentMethods().subscribe({
+      next: () => this.loadingList.set(false),
+      error: () => this.loadingList.set(false)
     });
   }
 
-  onPaymentTypeChange(type: 'credit_card' | 'debit_card' | 'paypal'): void {
-    this.selectedPaymentType = type;
-    this.paymentForm.patchValue({ type });
+  isCard(): boolean {
+    const t = this.form.get('type')?.value;
+    return t === 'credit_card' || t === 'debit_card';
+  }
+
+  onTypeChange(): void {
+    const cardControls = ['cardholderName', 'cardNumber', 'expiryMonth', 'expiryYear', 'last4'];
+    if (this.isCard()) {
+      cardControls.forEach(c => this.form.get(c)?.setValidators([Validators.required]));
+      this.form.get('email')?.clearValidators();
+    } else {
+      cardControls.forEach(c => this.form.get(c)?.clearValidators());
+      this.form.get('email')?.setValidators([Validators.required, Validators.email]);
+    }
+    [...cardControls, 'email'].forEach(c => this.form.get(c)?.updateValueAndValidity());
+  }
+
+  startAdd(): void {
+    this.editingPaymentId.set(null);
+    this.form.reset({
+      type: 'credit_card',
+      cardholderName: '',
+      cardNumber: '',
+      expiryMonth: '',
+      expiryYear: '',
+      brand: '',
+      last4: '',
+      email: ''
+    });
+    this.onTypeChange();
+    this.attemptedSubmit.set(false);
+    this.justSavedPayment.set(false);
+    this.showForm.set(true);
+  }
+
+  startEdit(pm: PaymentMethod): void {
+    if (!pm.id) return;
+    this.editingPaymentId.set(pm.id);
+    this.form.patchValue(pm);
+    this.onTypeChange();
+    this.attemptedSubmit.set(false);
+    this.justSavedPayment.set(false);
+    this.showForm.set(true);
+  }
+
+  cancelForm(): void {
+    this.showForm.set(false);
+    this.editingPaymentId.set(null);
+    this.attemptedSubmit.set(false);
+    this.justSavedPayment.set(false);
+    // Emit back event to go to previous step
+    this.back.emit();
+  }
+
+  submitForm(): void {
+    this.attemptedSubmit.set(true);
     
-    if (type === 'paypal') {
-      // Disable card fields for PayPal
-      this.paymentForm.get('cardNumber')?.disable();
-      this.paymentForm.get('expiryMonth')?.disable();
-      this.paymentForm.get('expiryYear')?.disable();
-      this.paymentForm.get('cvv')?.disable();
-      this.paymentForm.get('cardholderName')?.disable();
-    } else {
-      // Enable card fields for card payments
-      this.paymentForm.get('cardNumber')?.enable();
-      this.paymentForm.get('expiryMonth')?.enable();
-      this.paymentForm.get('expiryYear')?.enable();
-      this.paymentForm.get('cvv')?.enable();
-      this.paymentForm.get('cardholderName')?.enable();
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
     }
-  }
-
-  selectSavedPayment(payment: PaymentMethod): void {
-    const expiryMonth = typeof payment.expiryMonth === 'string' ? parseInt(payment.expiryMonth, 10) : payment.expiryMonth;
-    const expiryYear = typeof payment.expiryYear === 'string' ? parseInt(payment.expiryYear, 10) : payment.expiryYear;
-
-    this.paymentForm.patchValue({
-      type: payment.type,
-      cardNumber: payment.cardNumber,
-      expiryMonth,
-      expiryYear,
-      cardholderName: payment.cardholderName
-    });
-    this.selectedPaymentType = payment.type;
-  }
-
-  onSubmit(): void {
-    if (this.selectedPaymentType === 'paypal' || this.paymentForm.valid) {
-      this.isLoading = true;
-      
-      const paymentData: PaymentMethod = this.selectedPaymentType === 'paypal' 
-        ? { type: 'paypal' }
-        : this.paymentForm.value;
-      
-      this.checkoutService.setPaymentMethod(paymentData);
-      
-      // Optionally save payment method
-      this.checkoutService.savePaymentMethod(paymentData).subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.onContinue.emit();
-        },
-        error: (error) => {
-          console.error('Failed to save payment method:', error);
-          this.isLoading = false;
-          // Still continue even if save fails
-          this.onContinue.emit();
+    
+    if (this.submitting()) {
+      return;
+    }
+    
+    this.submitting.set(true);
+    const payload: PaymentMethod = this.form.value;
+    if (this.isCard() && payload.cardNumber) {
+      payload.last4 = payload.cardNumber.slice(-4);
+    }
+    const editingId = this.editingPaymentId();
+    
+    const obs = editingId
+      ? this.checkout.updatePaymentMethod(editingId, payload)
+      : this.checkout.addPaymentMethod(payload);
+    obs?.subscribe({
+      next: (saved) => {
+        if (saved?.id) {
+          this.selectedPaymentId.set(saved.id);
+          // Set chosen payment method in checkout state
+          this.checkout.setPaymentMethod(saved);
+          // Set flag to show continue button
+          this.justSavedPayment.set(true);
         }
-      });
-    } else {
-      this.markFormGroupTouched();
-    }
-  }
-
-  private markFormGroupTouched(): void {
-    Object.keys(this.paymentForm.controls).forEach(key => {
-      const control = this.paymentForm.get(key);
-      if (control?.enabled) {
-        control.markAsTouched();
+        this.submitting.set(false);
+        this.showForm.set(false);
+        this.attemptedSubmit.set(false);
+      },
+      error: (err) => {
+        console.error('[Payment] save error', err);
+        this.submitting.set(false);
+        this.attemptedSubmit.set(false);
+        alert('Failed to save payment method.');
       }
     });
   }
 
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.paymentForm.get(fieldName);
-    return !!(field && field.invalid && field.touched && field.enabled);
+  selectPayment(id: string): void {
+    this.selectedPaymentId.set(id);
   }
 
-  getFieldError(fieldName: string): string {
-    const field = this.paymentForm.get(fieldName);
-    if (field?.errors) {
-      if (field.errors['required']) return `${this.formatFieldName(fieldName)} is required`;
-      if (field.errors['pattern']) return `Invalid ${this.formatFieldName(fieldName)} format`;
-      if (field.errors['minlength']) return `${this.formatFieldName(fieldName)} is too short`;
-      if (field.errors['min'] || field.errors['max']) return `Invalid ${this.formatFieldName(fieldName)}`;
+  removePayment(pm: PaymentMethod): void {
+    if (!pm.id) return;
+    if (!confirm('Delete this payment method?')) return;
+    this.checkout.deletePaymentMethod(pm.id).subscribe({
+      next: () => {
+        if (this.selectedPaymentId() === pm.id) {
+          this.selectedPaymentId.set(null);
+          const list = this.methods();
+          if (list.length) this.selectedPaymentId.set(list[0].id || null);
+        }
+      }
+    });
+  }
+
+  labelForMethod(m: PaymentMethod): string {
+    if (m.type === 'paypal') return 'PayPal';
+    if (m.type === 'credit_card') return 'Credit Card';
+    if (m.type === 'debit_card') return 'Debit Card';
+    return m.type;
+  }
+
+  useSelectedPayment(): void {
+    const pmId = this.selectedPaymentId();
+    const pm = this.methods().find(p => p.id === pmId);
+    if (pm) {
+      console.log('[Payment] useSelectedPayment', pmId);
+      this.checkout.setPaymentMethod(pm);
+      this.justSavedPayment.set(false); // Reset the flag
+      this.continue.emit();
     }
-    return '';
   }
 
-  private formatFieldName(fieldName: string): string {
-    return fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1');
-  }
-
-  maskCardNumber(value: string): string {
-    if (!value) return '';
-    return '**** **** **** ' + value.slice(-4);
-  }
-
-  getYearOptions(): number[] {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let i = 0; i < 10; i++) {
-      years.push(currentYear + i);
-    }
-    return years;
+  invalid(ctrl: string): boolean {
+    const c = this.form.get(ctrl);
+    if (!c) return false;
+    return this.attemptedSubmit() ? c.invalid : (c.invalid && (c.dirty || c.touched));
   }
 }
